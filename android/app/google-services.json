@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "469681332414",
+    "project_id": "cat-care-15e24",
+    "storage_bucket": "cat-care-15e24.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:469681332414:android:2ac5347ddba8bb6f217eef",
+        "android_client_info": {
+          "package_name": "com.example.cat_care"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAbMcSbx3jC4EuINsswT0ynMMz0M7VmgNE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
