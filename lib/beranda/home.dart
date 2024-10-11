@@ -17,11 +17,12 @@ class _HomeScreenState extends State<HomeScreen> {
   String get username {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
+      // Jika displayName tersedia, gunakan itu, jika tidak, fallback ke email
       print("Current User: ${user.displayName}"); // Debug log
-      return user.displayName ?? "User"; // Default to "User" if displayName is null
+      return user.displayName ?? user.email?.split('@')[0] ?? "User"; // Fallback ke email atau "User"
     } else {
       print("No user is currently logged in.");
-      return "User"; // Default value
+      return "User"; // Nilai default
     }
   }
 
@@ -46,7 +47,7 @@ class _HomeScreenState extends State<HomeScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              "Hi, ${username}", // Use the username fetched from Firebase
+              "Hi, ${username}", // Gunakan username yang didapat dari Firebase
               style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
