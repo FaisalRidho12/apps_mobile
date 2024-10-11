@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'signup.dart';
-// Import home.dart (atau sesuai dengan file home screen Anda)
-import 'package:cat_care/beranda/home.dart';
+import 'package:cat_care/beranda/home.dart';  
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -14,19 +13,20 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   String? errorMessage;
-  bool _isLoading = false; // Untuk menampilkan indikator muat
+  bool _isLoading = false;
+  bool _obscureText = true;  
 
   Future<void> _login() async {
     if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
       setState(() {
-        errorMessage = "Please enter email and password.";
+        errorMessage = "Masukkan email dan password.";
       });
       return;
     }
 
     setState(() {
-      _isLoading = true; // Menampilkan indikator muat
-      errorMessage = null; // Reset error message
+      _isLoading = true;
+      errorMessage = null;
     });
 
     try {
@@ -36,7 +36,7 @@ class _LoginScreenState extends State<LoginScreen> {
       );
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => HomeScreen()), // Ganti dengan HomeScreen Anda
+        MaterialPageRoute(builder: (context) => HomeScreen()), 
       );
     } catch (e) {
       setState(() {
@@ -44,7 +44,7 @@ class _LoginScreenState extends State<LoginScreen> {
       });
     } finally {
       setState(() {
-        _isLoading = false; // Menghilangkan indikator muat
+        _isLoading = false;
       });
     }
   }
@@ -52,7 +52,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _resetPassword() async {
     if (_emailController.text.isEmpty) {
       setState(() {
-        errorMessage = "Please enter your email to reset password.";
+        errorMessage = "Masukkan email untuk reset password.";
       });
       return;
     }
@@ -60,7 +60,7 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       await _auth.sendPasswordResetEmail(email: _emailController.text);
       setState(() {
-        errorMessage = "Password reset email sent!";
+        errorMessage = "Email reset password telah dikirim!";
       });
     } catch (e) {
       setState(() {
@@ -90,7 +90,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 SizedBox(height: 20),
                 Image.asset(
-                  'assets/images/logo2.png',  // Path ikon hewan
+                  'assets/images/logo2.png',  
                   height: 150,
                 ),
                 SizedBox(height: 20),
@@ -153,8 +153,19 @@ class _LoginScreenState extends State<LoginScreen> {
                           decoration: InputDecoration(
                             border: InputBorder.none,
                             contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _obscureText ? Icons.visibility_off : Icons.visibility,
+                                color: Colors.teal[800],
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _obscureText = !_obscureText;
+                                });
+                              },
+                            ),
                           ),
-                          obscureText: true,
+                          obscureText: _obscureText,  
                         ),
                       ),
                     ],
@@ -170,7 +181,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 Align(
                   alignment: Alignment.centerRight,
                   child: ElevatedButton(
-                    onPressed: _isLoading ? null : _login, // Nonaktifkan jika sedang loading
+                    onPressed: _isLoading ? null : _login,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.teal,
                       shape: RoundedRectangleBorder(
@@ -179,7 +190,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                     ),
                     child: _isLoading
-                        ? CircularProgressIndicator(color: Colors.white) // Indikator muat
+                        ? CircularProgressIndicator(color: Colors.white)
                         : Text(
                             'Login',
                             style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
@@ -190,7 +201,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 TextButton(
                   onPressed: _resetPassword,
                   child: Text(
-                    "Forgot password?",
+                    "Lupa password?",
                     style: TextStyle(color: Colors.teal),
                   ),
                 ),
@@ -202,7 +213,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     );
                   },
                   child: Text(
-                    "Don't have an account? Sign up",
+                    "Belum punya akun? Daftar",
                     style: TextStyle(color: Colors.grey),
                   ),
                 ),
