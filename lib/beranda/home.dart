@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart'; // Import Firebase Auth
 import 'add_schedule.dart'; // Import halaman Tambahkan Jadwal
@@ -10,19 +11,50 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  // List untuk menyimpan jadwal yang telah ditambahkan
   List<Map<String, dynamic>> schedules = [];
+  PageController _pageController = PageController(initialPage: 0);
+  int _currentPage = 0;
+  Timer? _timer;
 
-  // Fetch the username from Firebase
+  @override
+  void initState() {
+    super.initState();
+    _startAutoSlide(); // Memulai animasi otomatis saat inisialisasi
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel(); // Pastikan timer dibatalkan saat screen dihancurkan
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  // Fungsi untuk memulai animasi slide otomatis
+  void _startAutoSlide() {
+    _timer = Timer.periodic(const Duration(seconds: 3), (Timer timer) {
+      if (_currentPage < 2) {
+        _currentPage++;
+      } else {
+        _currentPage = 0;
+      }
+
+      // Memindahkan halaman menggunakan PageController
+      _pageController.animateToPage(
+        _currentPage,
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeInOut,
+      );
+    });
+  }
+
   String get username {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
-      // Jika displayName tersedia, gunakan itu, jika tidak, fallback ke email
-      print("Current User: ${user.displayName}"); // Debug log
-      return user.displayName ?? user.email?.split('@')[0] ?? "User"; // Fallback ke email atau "User"
+      print("Current User: ${user.displayName}");
+      return user.displayName ?? user.email?.split('@')[0] ?? "User";
     } else {
       print("No user is currently logged in.");
-      return "User"; // Nilai default
+      return "User";
     }
   }
 
@@ -32,11 +64,11 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        actions: [
+        actions: const [
           Padding(
-            padding: const EdgeInsets.only(right: 16.0),
+            padding: EdgeInsets.only(right: 16.0),
             child: CircleAvatar(
-              backgroundImage: const AssetImage('assets/images/pp.png'), // Ganti dengan gambar profil kucing
+              backgroundImage: AssetImage('assets/images/pp.png'),
             ),
           ),
         ],
@@ -47,7 +79,7 @@ class _HomeScreenState extends State<HomeScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              "Hi, ${username}", // Gunakan username yang didapat dari Firebase
+              "Hi, $username",
               style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -55,13 +87,46 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(16.0),
-              child: const Image(
-                image: AssetImage('assets/images/cat.png'), // Ganti dengan gambar kucing
-                height: 200,
-                width: double.infinity,
-                fit: BoxFit.cover,
+            GestureDetector(
+              onTap: () {
+                setState(() {
+                  // Manual slide ketika gambar ditekan
+                  _currentPage = (_currentPage + 1) % 3;
+                  _pageController.animateToPage(
+                    _currentPage,
+                    duration: const Duration(milliseconds: 500),
+                    curve: Curves.easeInOut,
+                  );
+                });
+              },
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16.0),
+                child: SizedBox(
+                  height: 200,
+                  width: double.infinity,
+                  child: PageView(
+                    controller: _pageController,
+                    onPageChanged: (index) {
+                      setState(() {
+                        _currentPage = index; // Update halaman saat berubah manual
+                      });
+                    },
+                    children: const [
+                      Image(
+                        image: AssetImage('assets/images/cat1.png'),
+                        fit: BoxFit.cover,
+                      ),
+                      Image(
+                        image: AssetImage('assets/images/cat2.png'),
+                        fit: BoxFit.cover,
+                      ),
+                      Image(
+                        image: AssetImage('assets/images/cat3.png'),
+                        fit: BoxFit.cover,
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
             const SizedBox(height: 16),
@@ -81,7 +146,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 title: const Text('Tambahkan Jadwal'),
                 trailing: const Icon(Icons.add, color: Colors.teal),
                 onTap: () async {
-                  // Navigasi ke halaman Tambahkan Jadwal dan tunggu hasilnya
                   final result = await Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -89,7 +153,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   );
 
-                  // Jika ada hasil yang diterima, tambahkan ke dalam daftar jadwal
                   if (result != null && result is Map<String, dynamic>) {
                     setState(() {
                       schedules.insert(0, {
@@ -121,7 +184,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       itemBuilder: (context, index) {
                         return GestureDetector(
                           onTap: () {
-                            // Ketika kotak jadwal ditekan, tampilkan dialog opsi
                             _showOptionDialog(context, index);
                           },
                           child: Container(
@@ -179,7 +241,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Fungsi untuk menampilkan dialog opsi (Edit dan Delete)
   void _showOptionDialog(BuildContext context, int index) {
     showDialog(
       context: context,
@@ -190,14 +251,13 @@ class _HomeScreenState extends State<HomeScreen> {
           actions: [
             TextButton(
               onPressed: () async {
-                Navigator.pop(context); // Tutup dialog
+                Navigator.pop(context);
 
-                // Arahkan ke halaman AddScheduleScreen dengan data yang ada
                 final result = await Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (context) => AddScheduleScreen(
-                      initialData: schedules[index], // Kirim data yang ada
+                      initialData: schedules[index],
                     ),
                   ),
                 );
@@ -220,7 +280,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 setState(() {
                   schedules.removeAt(index);
                 });
-                Navigator.pop(context); // Tutup dialog
+                Navigator.pop(context);
               },
               child: const Text('Delete', style: TextStyle(color: Colors.red)),
             ),
