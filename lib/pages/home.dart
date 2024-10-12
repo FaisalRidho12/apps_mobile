@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart'; // Import Firebase Auth
+import 'package:flutter_local_notifications/flutter_local_notifications.dart'; // Import umtuk notifications
+import 'package:audioplayers/audioplayers.dart'; // Import for alarm sound
 import 'add_schedule.dart'; // Import halaman Tambahkan Jadwal
 
 class HomeScreen extends StatefulWidget {
@@ -15,18 +17,35 @@ class _HomeScreenState extends State<HomeScreen> {
   final PageController _pageController = PageController(initialPage: 0);
   int _currentPage = 0;
   Timer? _timer;
+  FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+  AudioPlayer audioPlayer = AudioPlayer();
+  
+  bool isAlarmPlaying = false; // Menambahkan status alarm
 
   @override
   void initState() {
     super.initState();
-    _startAutoSlide(); // Memulai animasi otomatis saat inisialisasi
+    _initializeNotifications();
+    _startAutoSlide(); // Memulai animasi otomatis 
+    _checkSchedules();
   }
 
   @override
   void dispose() {
-    _timer?.cancel(); // Pastikan timer dibatalkan saat screen dihancurkan
+    _timer?.cancel(); // timer dibatalkan 
+    audioPlayer.dispose();
     _pageController.dispose();
     super.dispose();
+  }
+
+  // Inisialisasi notifikasi
+  void _initializeNotifications() {
+    const AndroidInitializationSettings initializationSettingsAndroid =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
+    const InitializationSettings initializationSettings =
+        InitializationSettings(android: initializationSettingsAndroid);
+    
+    flutterLocalNotificationsPlugin.initialize(initializationSettings);
   }
 
   // Fungsi untuk memulai animasi slide otomatis
@@ -45,6 +64,70 @@ class _HomeScreenState extends State<HomeScreen> {
         curve: Curves.easeInOut,
       );
     });
+  }
+
+  // Fungsi untuk mengecek apakah jadwal sudah mencapai waktunya
+  void _checkSchedules() {
+    _timer = Timer.periodic(const Duration(minutes: 1), (Timer timer) {
+      final now = TimeOfDay.now();
+      for (var schedule in schedules) {
+        if (schedule['isOn'] == true) {
+          TimeOfDay scheduleTime = _parseTime(schedule['time']);
+          if (now.hour == scheduleTime.hour && now.minute == scheduleTime.minute) {
+            _showNotification(schedule['name']);
+            _playAlarm(); // Memanggil fungsi untuk memutar alarm
+          }
+        }
+      }
+    });
+  }
+
+  // Parse waktu dari string ke TimeOfDay
+  TimeOfDay _parseTime(String time) {
+    final parts = time.split(':');
+    return TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]));
+  }
+
+  // Tampilkan notifikasi
+  void _showNotification(String scheduleName) async {
+    const AndroidNotificationDetails androidPlatformChannelSpecifics =
+        AndroidNotificationDetails(
+      'your_channel_id',
+      'your_channel_name',
+      importance: Importance.max,
+      priority: Priority.high,
+    );
+    const NotificationDetails platformChannelSpecifics =
+        NotificationDetails(android: androidPlatformChannelSpecifics);
+
+    await flutterLocalNotificationsPlugin.show(
+      0,
+      'Jadwal Tiba',
+      'Waktunya untuk $scheduleName',
+      platformChannelSpecifics,
+    );
+  }
+
+  // Mainkan suara alarm
+  void _playAlarm() async {
+    if (!isAlarmPlaying) { // Memastikan alarm hanya diputar sekali
+      isAlarmPlaying = true; // Mengubah status alarm
+      print("Memulai alarm...");
+      await audioPlayer.setSource(AssetSource('alarm_sound.mp3'));
+      print("Sumber audio diatur...");
+      audioPlayer.setReleaseMode(ReleaseMode.loop); // Mengulangi suara alarm
+      await audioPlayer.resume();
+      print("Alarm diputar...");
+    }
+  }
+
+  // Matikan suara alarm
+  void _stopAlarm() async {
+    if (isAlarmPlaying) {
+      isAlarmPlaying = false; // Mengubah status alarm
+      await audioPlayer.stop(); // Hentikan suara alarm
+      print("Alarm dihentikan.");
+    }
   }
 
   String get username {
@@ -207,6 +290,11 @@ class _HomeScreenState extends State<HomeScreen> {
                                 onChanged: (value) {
                                   setState(() {
                                     schedules[index]['isOn'] = value;
+                                    if (value){
+                                      _checkSchedules();
+                                    } else {
+                                      _stopAlarm();
+                                    }
                                   });
                                 },
                               ),

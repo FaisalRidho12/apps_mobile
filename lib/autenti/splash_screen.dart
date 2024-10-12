@@ -26,7 +26,7 @@ class _SplashScreenState extends State<SplashScreen> {
           const Align(
             alignment: Alignment.topCenter,  // Ubah sesuai kebutuhan
             child: Padding(
-              padding: EdgeInsets.only(top: 50.0),  // Jarak dari atas
+              padding: EdgeInsets.only(top: 150.0),  // Jarak dari atas
               child: Text(
                 'Selamat Datang',
                 style: TextStyle(
