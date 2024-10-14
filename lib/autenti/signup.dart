@@ -4,6 +4,8 @@ import 'package:cloud_firestore/cloud_firestore.dart'; // Import Firestore
 import 'login.dart';
 
 class SignupScreen extends StatefulWidget {
+  const SignupScreen({super.key});
+
   @override
   _SignupScreenState createState() => _SignupScreenState();
 }
@@ -16,6 +18,7 @@ class _SignupScreenState extends State<SignupScreen> {
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController = TextEditingController();
   String? errorMessage;
+  bool _obscuretext = true;
 
   Future<void> _signup() async {
     if (_passwordController.text != _confirmPasswordController.text) {
@@ -42,7 +45,7 @@ class _SignupScreenState extends State<SignupScreen> {
       // Navigasi ke halaman login setelah pendaftaran berhasil
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => LoginScreen()),
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
       );
     } catch (e) {
       setState(() {
@@ -62,7 +65,7 @@ class _SignupScreenState extends State<SignupScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
+                const Text(
                   'Sign UP',
                   style: TextStyle(
                     fontSize: 30,
@@ -70,18 +73,18 @@ class _SignupScreenState extends State<SignupScreen> {
                     color: Colors.teal,
                   ),
                 ),
-                SizedBox(height: 20),
+                const SizedBox(height: 20),
                 Image.asset(
                   'assets/images/logo2.png',  // Path ikon hewan peliharaan
                   height: 150,
                 ),
-                SizedBox(height: 20),
+                const SizedBox(height: 20),
                 Container(
-                  padding: EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
+                    boxShadow: const [
                       BoxShadow(
                         color: Colors.black26,
                         blurRadius: 10,
@@ -101,7 +104,7 @@ class _SignupScreenState extends State<SignupScreen> {
                           color: Colors.teal[800],
                         ),
                       ),
-                      SizedBox(height: 8),
+                      const SizedBox(height: 8),
                       Container(
                         decoration: BoxDecoration(
                           color: Colors.grey[200],
@@ -109,13 +112,13 @@ class _SignupScreenState extends State<SignupScreen> {
                         ),
                         child: TextField(
                           controller: _emailController,
-                          decoration: InputDecoration(
+                          decoration: const InputDecoration(
                             border: InputBorder.none,
                             contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                           ),
                         ),
                       ),
-                      SizedBox(height: 16),
+                      const SizedBox(height: 16),
                       Text(
                         'Username',
                         style: TextStyle(
@@ -124,7 +127,7 @@ class _SignupScreenState extends State<SignupScreen> {
                           color: Colors.teal[800],
                         ),
                       ),
-                      SizedBox(height: 8),
+                      const SizedBox(height: 8),
                       Container(
                         decoration: BoxDecoration(
                           color: Colors.grey[200],
@@ -132,13 +135,13 @@ class _SignupScreenState extends State<SignupScreen> {
                         ),
                         child: TextField(
                           controller: _usernameController,
-                          decoration: InputDecoration(
+                          decoration: const InputDecoration(
                             border: InputBorder.none,
                             contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                           ),
                         ),
                       ),
-                      SizedBox(height: 16),
+                      const SizedBox(height: 16),
                       Text(
                         'Password',
                         style: TextStyle(
@@ -147,7 +150,7 @@ class _SignupScreenState extends State<SignupScreen> {
                           color: Colors.teal[800],
                         ),
                       ),
-                      SizedBox(height: 8),
+                      const SizedBox(height: 8),
                       Container(
                         decoration: BoxDecoration(
                           color: Colors.grey[200],
@@ -157,12 +160,23 @@ class _SignupScreenState extends State<SignupScreen> {
                           controller: _passwordController,
                           decoration: InputDecoration(
                             border: InputBorder.none,
-                            contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              suffixIcon: IconButton(
+                              icon: Icon(
+                                _obscuretext ? Icons.visibility_off : Icons.visibility,
+                                color: Colors.teal,
+                              ),
+                              onPressed: (){
+                                setState(() {
+                                  _obscuretext = !_obscuretext;
+                                });
+                              },
+                            )
                           ),
-                          obscureText: true,
+                          obscureText: _obscuretext,
                         ),
                       ),
-                      SizedBox(height: 16),
+                      const SizedBox(height: 16),
                       Text(
                         'Ulangi Password',
                         style: TextStyle(
@@ -171,7 +185,7 @@ class _SignupScreenState extends State<SignupScreen> {
                           color: Colors.teal[800],
                         ),
                       ),
-                      SizedBox(height: 8),
+                      const SizedBox(height: 8),
                       Container(
                         decoration: BoxDecoration(
                           color: Colors.grey[200],
@@ -181,21 +195,32 @@ class _SignupScreenState extends State<SignupScreen> {
                           controller: _confirmPasswordController,
                           decoration: InputDecoration(
                             border: InputBorder.none,
-                            contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              suffixIcon: IconButton(
+                              icon: Icon(
+                                _obscuretext ? Icons.visibility_off : Icons.visibility,
+                                color: Colors.teal,
+                              ),
+                              onPressed: (){
+                                setState(() {
+                                  _obscuretext = !_obscuretext;
+                                });
+                              },
+                            )
                           ),
-                          obscureText: true,
+                          obscureText: _obscuretext,
                         ),
                       ),
                     ],
                   ),
                 ),
-                SizedBox(height: 20),
+                const SizedBox(height: 20),
                 if (errorMessage != null) 
                   Text(
                     errorMessage!, 
-                    style: TextStyle(color: Colors.red),
+                    style: const TextStyle(color: Colors.red),
                   ),
-                SizedBox(height: 10),
+                const SizedBox(height: 10),
                 Align(
                   alignment: Alignment.centerRight,
                   child: ElevatedButton(
@@ -205,23 +230,23 @@ class _SignupScreenState extends State<SignupScreen> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                     ),
-                    child: Text(
+                    child: const Text(
                       'Sign Up',
                       style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                     ),
                   ),
                 ),
-                SizedBox(height: 20),
+                const SizedBox(height: 20),
                 TextButton(
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => LoginScreen()),
+                      MaterialPageRoute(builder: (context) => const LoginScreen()),
                     );
                   },
-                  child: Text(
+                  child: const Text(
                     "Already have an account? Login",
                     style: TextStyle(color: Colors.grey),
                   ),
