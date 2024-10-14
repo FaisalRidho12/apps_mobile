@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart'; // Import Firebase Auth
 import 'package:flutter_local_notifications/flutter_local_notifications.dart'; // Import untuk notifikasi
 import 'package:audioplayers/audioplayers.dart'; // Import untuk suara alarm
 import 'add_schedule.dart'; // Import halaman Tambahkan Jadwal
+import 'iot.dart'; // Import IoT content
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -162,7 +163,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0),
-        child: _selectedIndex == 0 ? _buildHomeContent() : _buildIoTContent(),
+        child: _selectedIndex == 0 ? _buildHomeContent() : const IoTContent(),
       ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
@@ -342,39 +343,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
         ),
       ],
-    );
-  }
-
-  // Build content for IoT tab
-  Widget _buildIoTContent() {
-    bool _isDeviceOn = false; // State for IoT device
-
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Text(
-            'Kontrol IoT',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.teal,
-            ),
-          ),
-          const SizedBox(height: 20),
-          SwitchListTile(
-            title: const Text('Device Status'),
-            value: _isDeviceOn,
-            onChanged: (bool value) {
-              setState(() {
-                _isDeviceOn = value; // Update IoT device state
-                // Implement IoT control logic here
-                print('Device turned ${_isDeviceOn ? "ON" : "OFF"}');
-              });
-            },
-          ),
-        ],
-      ),
     );
   }
 
