@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'signup.dart';
-import 'package:cat_care/beranda/home.dart';  
+import 'package:cat_care/pages/home.dart';
 
 class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
+
   @override
   _LoginScreenState createState() => _LoginScreenState();
 }
@@ -14,19 +16,19 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _passwordController = TextEditingController();
   String? errorMessage;
   bool _isLoading = false;
-  bool _obscureText = true;  
+  bool _obscuretext = true;
 
   Future<void> _login() async {
     if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
       setState(() {
-        errorMessage = "Masukkan email dan password.";
+        errorMessage = "Please enter email and password.";
       });
       return;
     }
 
     setState(() {
       _isLoading = true;
-      errorMessage = null;
+      errorMessage = null; // Reset error message
     });
 
     try {
@@ -36,15 +38,33 @@ class _LoginScreenState extends State<LoginScreen> {
       );
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => HomeScreen()), 
+        MaterialPageRoute(builder: (context) => const HomeScreen()), // Ganti dengan HomeScreen Anda
       );
+    } on FirebaseAuthException catch (e) {
+      print('Error code: ${e.code}'); // Log kode error untuk debugging
+      setState(() {
+        switch (e.code) {
+          case 'user-not-found':
+          case 'wrong-password':
+            errorMessage = 'Email atau password salah.'; // Pesan untuk email/password salah
+            break;
+          case 'invalid-email':
+            errorMessage = 'Alamat email tidak valid.';
+            break;
+          case 'user-disabled':
+            errorMessage = 'Akun ini telah dinonaktifkan.';
+            break;
+          default:
+            errorMessage = 'Terjadi kesalahan. Silakan coba lagi.';
+        }
+      });
     } catch (e) {
       setState(() {
-        errorMessage = e.toString();
+        errorMessage = 'Terjadi kesalahan yang tidak terduga. Silakan coba lagi.';
       });
     } finally {
       setState(() {
-        _isLoading = false;
+        _isLoading = false; // Menghilangkan indikator muat
       });
     }
   }
@@ -52,7 +72,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _resetPassword() async {
     if (_emailController.text.isEmpty) {
       setState(() {
-        errorMessage = "Masukkan email untuk reset password.";
+        errorMessage = "Please enter your email to reset password.";
       });
       return;
     }
@@ -60,11 +80,15 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       await _auth.sendPasswordResetEmail(email: _emailController.text);
       setState(() {
-        errorMessage = "Email reset password telah dikirim!";
+        errorMessage = "Password reset email sent!";
+      });
+    } on FirebaseAuthException catch (e) {
+      setState(() {
+        errorMessage = e.message; // Tampilkan pesan error dari Firebase
       });
     } catch (e) {
       setState(() {
-        errorMessage = e.toString();
+        errorMessage = 'Terjadi kesalahan yang tidak terduga. Silakan coba lagi.';
       });
     }
   }
@@ -80,7 +104,7 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
+                const Text(
                   'Login',
                   style: TextStyle(
                     fontSize: 30,
@@ -88,18 +112,18 @@ class _LoginScreenState extends State<LoginScreen> {
                     color: Colors.teal,
                   ),
                 ),
-                SizedBox(height: 20),
+                const SizedBox(height: 20),
                 Image.asset(
-                  'assets/images/logo2.png',  
+                  'assets/images/logo2.png', // Path ikon hewan
                   height: 150,
                 ),
-                SizedBox(height: 20),
+                const SizedBox(height: 20),
                 Container(
-                  padding: EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
+                    boxShadow: const [
                       BoxShadow(
                         color: Colors.black26,
                         blurRadius: 10,
@@ -119,7 +143,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           color: Colors.teal[800],
                         ),
                       ),
-                      SizedBox(height: 8),
+                      const SizedBox(height: 8),
                       Container(
                         decoration: BoxDecoration(
                           color: Colors.grey[200],
@@ -127,13 +151,13 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         child: TextField(
                           controller: _emailController,
-                          decoration: InputDecoration(
+                          decoration: const InputDecoration(
                             border: InputBorder.none,
                             contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                           ),
                         ),
                       ),
-                      SizedBox(height: 16),
+                      const SizedBox(height: 16),
                       Text(
                         'Password',
                         style: TextStyle(
@@ -142,7 +166,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           color: Colors.teal[800],
                         ),
                       ),
-                      SizedBox(height: 8),
+                      const SizedBox(height: 8),
                       Container(
                         decoration: BoxDecoration(
                           color: Colors.grey[200],
@@ -152,32 +176,32 @@ class _LoginScreenState extends State<LoginScreen> {
                           controller: _passwordController,
                           decoration: InputDecoration(
                             border: InputBorder.none,
-                            contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                             suffixIcon: IconButton(
                               icon: Icon(
-                                _obscureText ? Icons.visibility_off : Icons.visibility,
-                                color: Colors.teal[800],
+                                _obscuretext ? Icons.visibility_off : Icons.visibility,
+                                color: Colors.teal,
                               ),
                               onPressed: () {
                                 setState(() {
-                                  _obscureText = !_obscureText;
+                                  _obscuretext = !_obscuretext;
                                 });
                               },
                             ),
                           ),
-                          obscureText: _obscureText,  
+                          obscureText: _obscuretext,
                         ),
                       ),
                     ],
                   ),
                 ),
-                SizedBox(height: 20),
+                const SizedBox(height: 20),
                 if (errorMessage != null)
                   Text(
                     errorMessage!,
-                    style: TextStyle(color: Colors.red),
+                    style: const TextStyle(color: Colors.red),
                   ),
-                SizedBox(height: 10),
+                const SizedBox(height: 10),
                 Align(
                   alignment: Alignment.centerRight,
                   child: ElevatedButton(
@@ -187,21 +211,21 @@ class _LoginScreenState extends State<LoginScreen> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                     ),
                     child: _isLoading
-                        ? CircularProgressIndicator(color: Colors.white)
-                        : Text(
+                        ? const CircularProgressIndicator(color: Colors.white)
+                        : const Text(
                             'Login',
                             style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                           ),
                   ),
                 ),
-                SizedBox(height: 20),
+                const SizedBox(height: 20),
                 TextButton(
                   onPressed: _resetPassword,
-                  child: Text(
-                    "Lupa password?",
+                  child: const Text(
+                    "Forgot password?",
                     style: TextStyle(color: Colors.teal),
                   ),
                 ),
@@ -209,11 +233,11 @@ class _LoginScreenState extends State<LoginScreen> {
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => SignupScreen()),
+                      MaterialPageRoute(builder: (context) => const SignupScreen()),
                     );
                   },
-                  child: Text(
-                    "Belum punya akun? Daftar",
+                  child: const Text(
+                    "Don't have an account? Sign up",
                     style: TextStyle(color: Colors.grey),
                   ),
                 ),

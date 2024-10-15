@@ -71,7 +71,12 @@ class _AddScheduleScreenState extends State<AddScheduleScreen> {
               onPressed: () {
                 _onSavePressed();
               },
-              child: const Text('Simpan'),
+              child: const Text(
+                'Simpan',
+                style: TextStyle(
+                  color: Colors.white,
+                ),
+              ),
             ),
           ],
         ),
