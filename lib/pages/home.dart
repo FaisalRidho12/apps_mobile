@@ -1,8 +1,9 @@
 import 'dart:async';
-import 'package:cat_care/pages/profile.dart';
+import 'profile.dart';
+import 'iot.dart'; // Import halaman IoT
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart'; // Import Firebase Auth
-import 'package:flutter_local_notifications/flutter_local_notifications.dart'; // Import umtuk notifications
+import 'package:flutter_local_notifications/flutter_local_notifications.dart'; // Import untuk notifikasi
 import 'package:audioplayers/audioplayers.dart'; // Import for alarm sound
 import 'add_schedule.dart'; // Import halaman Tambahkan Jadwal
 
@@ -309,40 +310,54 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(
-  currentIndex: _currentPage, // Track the current index
-  onTap: (int index) {
-    setState(() {
-      _currentPage = index; // Update current page index
-    });
+        currentIndex: _currentPage, // Track the current index
+        onTap: (int index) {
+          setState(() { 
+            _currentPage = index; // Update current page index
+          });
 
-    // Handle navigation based on the index
-    if (index == 2) { // Profile page is the third tab (index 2)
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const ProfileScreen(),
-        ),
-      );
-    }
-  },
-  items: const [
-    BottomNavigationBarItem(
-      icon: ImageIcon(AssetImage('assets/icons1/home.png'), size: 24),
-      label: 'Home',
-    ),
-    BottomNavigationBarItem(
-      icon: ImageIcon(AssetImage('assets/icons1/iot.png'), size: 24),
-      label: 'IoT',
-    ),
-    BottomNavigationBarItem(
-      icon: ImageIcon(AssetImage('assets/icons1/profil.png'), size: 24),
-      label: 'Profile',
-    ),
-  ],
-  selectedItemColor: Colors.teal,
-  unselectedItemColor: Colors.grey,
-  showUnselectedLabels: true,
-),
+          // Handle navigation based on the index
+          if (index == 0) { // Home page
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const HomeScreen(),
+              ),
+            );
+          } else if (index == 1) { // IoT page
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const IoTContent(), // Arahkan ke halaman IoT
+              ),
+            );
+          } else if (index == 2) { // Profile page
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const ProfileScreen(),
+              ),
+            );
+          }
+        },
+        items: const [
+          BottomNavigationBarItem(
+            icon: ImageIcon(AssetImage('assets/icons1/home.png'), size: 24),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: ImageIcon(AssetImage('assets/icons1/iot.png'), size: 24),
+            label: 'IoT',
+          ),
+          BottomNavigationBarItem(
+            icon: ImageIcon(AssetImage('assets/icons1/profil.png'), size: 24),
+            label: 'Profile',
+          ),
+        ],
+        selectedItemColor: Colors.teal,
+        unselectedItemColor: Colors.grey,
+        showUnselectedLabels: true,
+      ),
     );
   }
 
