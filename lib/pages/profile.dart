@@ -1,6 +1,8 @@
+import 'package:cat_care/autenti/login.dart'; // Import halaman login
 import 'package:flutter/material.dart';
-import 'home.dart'; 
+import 'home.dart';
 import 'iot.dart';
+
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
@@ -15,6 +17,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
@@ -66,7 +69,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // Fungsi untuk membangun item menu
+  // Fungsi untuk membangun item menu tanpa tombol panah
   Widget _buildMenuItem(BuildContext context, IconData icon, String title, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
@@ -93,7 +96,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
               style: const TextStyle(fontSize: 18, color: Colors.teal),
             ),
             const Spacer(),
-            const Icon(Icons.arrow_forward_ios, color: Colors.teal),
           ],
         ),
       ),
@@ -112,14 +114,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
           // Pergi ke Home
           Navigator.pushAndRemoveUntil(
             context,
-            MaterialPageRoute(builder: (context) => const HomeScreen()), // Ambil HomeScreen dari home.dart
+            MaterialPageRoute(builder: (context) => const HomeScreen()),
             (Route<dynamic> route) => false, // Hapus stack sebelumnya
           );
         } else if (index == 1) {
           // Pergi ke IoT
           Navigator.pushAndRemoveUntil(
             context,
-            MaterialPageRoute(builder: (context) => const IoTContent()), // Ambil IotScreen dari home.dart
+            MaterialPageRoute(builder: (context) => const IoTContent()),
             (Route<dynamic> route) => false, // Hapus stack sebelumnya
           );
         }
@@ -153,6 +155,7 @@ class SettingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
@@ -171,7 +174,7 @@ class SettingsScreen extends StatelessWidget {
           children: [
             const CircleAvatar(
               radius: 40,
-              backgroundImage: AssetImage('assets/images/pp.png'), // Gambar profil
+              backgroundImage: AssetImage('assets/images/pp.png'),
             ),
             const SizedBox(height: 16),
             const Text(
@@ -193,7 +196,8 @@ class SettingsScreen extends StatelessWidget {
               // Aksi Edit Akun
             }),
             _buildAccountMenuItem(Icons.logout, 'Logout', () {
-              // Aksi Logout
+              // Tampilkan dialog konfirmasi sebelum logout
+              _showLogoutConfirmationDialog(context);
             }),
           ],
         ),
@@ -201,6 +205,7 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
+  // Fungsi untuk membangun item menu akun
   Widget _buildAccountMenuItem(IconData icon, String title, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
@@ -231,6 +236,39 @@ class SettingsScreen extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  // Fungsi untuk menampilkan dialog konfirmasi logout
+  void _showLogoutConfirmationDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Konfirmasi Logout'),
+          content: const Text('Apakah Anda yakin ingin keluar?'),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Tidak'),
+              onPressed: () {
+                Navigator.of(context).pop(); // Tutup dialog
+              },
+            ),
+            TextButton(
+              child: const Text('Iya'),
+              onPressed: () {
+                Navigator.of(context).pop(); // Tutup dialog
+                // Lakukan logout dan navigasi ke halaman login
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (context) => const LoginScreen()),
+                  (Route<dynamic> route) => false, // Hapus stack sebelumnya
+                );
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 }
