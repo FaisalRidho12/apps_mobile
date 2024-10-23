@@ -34,6 +34,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _loadSchedules();
     _checkSchedules();
     _loadUsername();
+    
   }
 
   @override
@@ -154,15 +155,16 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  // Fungsi untuk memuat username dari SharedPreferences
+    // Fungsi untuk memuat username dari SharedPreferences
   Future<void> _loadUsername() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
       _username = prefs.getString('username') ?? "User"; // Muat username atau default ke "User"
     });
   }
+ 
 
-  // Fungsi untuk menyimpan username ke SharedPreferences
+ // Fungsi untuk menyimpan username ke SharedPreferences
   Future<void> _saveUsername(String username) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setString('username', username); // Simpan username
@@ -190,9 +192,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Panggil untuk menyimpan username jika ada pengguna yang login
+        // Panggil untuk menyimpan username jika ada pengguna yang login
     _getAndSaveUsername();
-
+    
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.transparent,
@@ -212,7 +214,7 @@ class _HomeScreenState extends State<HomeScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              "Hi, $_username",
+              "Hi, $username",
               style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
