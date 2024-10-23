@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';  // Import SharedPreferences
 import 'signup.dart';
 import 'package:cat_care/pages/home.dart';
 
@@ -21,7 +22,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _login() async {
     if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
       setState(() {
-        errorMessage = "Please enter email and password.";
+        errorMessage = "Silahkan masukkan email dan password.";
       });
       return;
     }
@@ -32,10 +33,16 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
+      // Sign in user
       await _auth.signInWithEmailAndPassword(
         email: _emailController.text,
         password: _passwordController.text,
       );
+      
+      // Simpan status login ke SharedPreferences
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      prefs.setBool('isLoggedIn', true);  // Menyimpan status login
+
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const HomeScreen()), // Ganti dengan HomeScreen Anda
@@ -44,7 +51,6 @@ class _LoginScreenState extends State<LoginScreen> {
       print('Error code: ${e.code}'); // Log kode error untuk debugging
       setState(() {
         switch (e.code) {
-          case 'user-not-found':
           case 'wrong-password':
             errorMessage = 'Email atau password salah.'; // Pesan untuk email/password salah
             break;
@@ -53,6 +59,9 @@ class _LoginScreenState extends State<LoginScreen> {
             break;
           case 'user-disabled':
             errorMessage = 'Akun ini telah dinonaktifkan.';
+            break;
+          case 'user-not-found':
+            errorMessage = 'Akun tidak ditemukan.';
             break;
           default:
             errorMessage = 'Terjadi kesalahan. Silakan coba lagi.';
@@ -64,7 +73,7 @@ class _LoginScreenState extends State<LoginScreen> {
       });
     } finally {
       setState(() {
-        _isLoading = false; // Menghilangkan indikator muat
+        _isLoading = false; // Menghilangkan indikator loading
       });
     }
   }
@@ -72,7 +81,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _resetPassword() async {
     if (_emailController.text.isEmpty) {
       setState(() {
-        errorMessage = "Please enter your email to reset password.";
+        errorMessage = "Silahkan masukkan email untuk reset password.";
       });
       return;
     }
@@ -80,7 +89,7 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       await _auth.sendPasswordResetEmail(email: _emailController.text);
       setState(() {
-        errorMessage = "Password reset email sent!";
+        errorMessage = "Email reset password terkirim!";
       });
     } on FirebaseAuthException catch (e) {
       setState(() {
