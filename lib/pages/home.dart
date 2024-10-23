@@ -1,18 +1,8 @@
 import 'dart:async';
-<<<<<<< HEAD
-<<<<<<< HEAD
 import 'dart:convert';
-=======
-import 'profile.dart';
-import 'iot.dart'; // Import halaman IoT
->>>>>>> f18df35e014028300de072e2557027b1e90e1327
-=======
-import 'profile.dart';
-import 'iot.dart'; // Import halaman IoT
->>>>>>> f18df35e014028300de072e2557027b1e90e1327
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart'; // Import Firebase Auth
-import 'package:flutter_local_notifications/flutter_local_notifications.dart'; // Import untuk notifikasi
+import 'package:flutter_local_notifications/flutter_local_notifications.dart'; // Import umtuk notifications
 import 'package:audioplayers/audioplayers.dart'; // Import for alarm sound
 import 'package:shared_preferences/shared_preferences.dart';
 import 'add_schedule.dart'; // Import halaman Tambahkan Jadwal
@@ -370,35 +360,15 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(
-<<<<<<< HEAD
-<<<<<<< HEAD
         currentIndex: 0, // Menetapkan Home sebagai halaman awal
         onTap: (int index) {
           if (index == 0) {
             Navigator.pushReplacement(
-=======
-=======
->>>>>>> f18df35e014028300de072e2557027b1e90e1327
-        currentIndex: _currentPage, // Track the current index
-        onTap: (int index) {
-          setState(() { 
-            _currentPage = index; // Update current page index
-          });
-
-          // Handle navigation based on the index
-          if (index == 0) { // Home page
-            Navigator.push(
-<<<<<<< HEAD
->>>>>>> f18df35e014028300de072e2557027b1e90e1327
-=======
->>>>>>> f18df35e014028300de072e2557027b1e90e1327
               context,
               MaterialPageRoute(
                 builder: (context) => const HomeScreen(),
               ),
             );
-<<<<<<< HEAD
-<<<<<<< HEAD
           } else if (index == 1) {
             Navigator.pushReplacement(
               context,
@@ -411,25 +381,6 @@ class _HomeScreenState extends State<HomeScreen> {
               context,
               MaterialPageRoute(
                 builder: (context) => const ProfileScreen(), // Mengarahkan ke halaman Profile
-=======
-=======
->>>>>>> f18df35e014028300de072e2557027b1e90e1327
-          } else if (index == 1) { // IoT page
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const IoTContent(), // Arahkan ke halaman IoT
-              ),
-            );
-          } else if (index == 2) { // Profile page
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const ProfileScreen(),
-<<<<<<< HEAD
->>>>>>> f18df35e014028300de072e2557027b1e90e1327
-=======
->>>>>>> f18df35e014028300de072e2557027b1e90e1327
               ),
             );
           }
