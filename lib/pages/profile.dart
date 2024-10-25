@@ -1,5 +1,6 @@
 import 'package:cat_care/autenti/login.dart'; // Import halaman login
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart'; // Tambahkan Firebase Authentication
 import 'home.dart';
 import 'iot.dart';
 
@@ -34,7 +35,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            // Bagian Profile User
             const CircleAvatar(
               radius: 40,
               backgroundImage: AssetImage('assets/images/pp.png'), // Gambar profil
@@ -49,7 +49,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
               style: TextStyle(fontSize: 16, color: Colors.grey),
             ),
             const SizedBox(height: 32),
-            // List Menu Pengaturan
             _buildMenuItem(context, Icons.settings, 'Pengaturan', () {
               Navigator.push(
                 context,
@@ -69,7 +68,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // Fungsi untuk membangun item menu tanpa tombol panah
   Widget _buildMenuItem(BuildContext context, IconData icon, String title, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
@@ -102,7 +100,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // Fungsi untuk Bottom Navigation Bar
   Widget _buildBottomNavigationBar() {
     return BottomNavigationBar(
       currentIndex: _currentIndex,
@@ -111,18 +108,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
           _currentIndex = index;
         });
         if (index == 0) {
-          // Pergi ke Home
           Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(builder: (context) => const HomeScreen()),
-            (Route<dynamic> route) => false, // Hapus stack sebelumnya
+            (Route<dynamic> route) => false,
           );
         } else if (index == 1) {
-          // Pergi ke IoT
           Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(builder: (context) => const IoTContent()),
-            (Route<dynamic> route) => false, // Hapus stack sebelumnya
+            (Route<dynamic> route) => false,
           );
         }
       },
@@ -147,7 +142,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 }
 
-// Halaman pengaturan (Settings)
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
@@ -192,11 +186,13 @@ class SettingsScreen extends StatelessWidget {
             _buildAccountMenuItem(Icons.delete, 'Hapus Akun', () {
               // Aksi Hapus Akun
             }),
-            _buildAccountMenuItem(Icons.edit, 'Edit Akun', () {
-              // Aksi Edit Akun
+            _buildAccountMenuItem(Icons.edit, 'ganti password', () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const ChangePasswordWidget()),
+              );
             }),
             _buildAccountMenuItem(Icons.logout, 'Logout', () {
-              // Tampilkan dialog konfirmasi sebelum logout
               _showLogoutConfirmationDialog(context);
             }),
           ],
@@ -205,7 +201,6 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  // Fungsi untuk membangun item menu akun
   Widget _buildAccountMenuItem(IconData icon, String title, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
@@ -239,7 +234,6 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  // Fungsi untuk menampilkan dialog konfirmasi logout
   void _showLogoutConfirmationDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -251,24 +245,146 @@ class SettingsScreen extends StatelessWidget {
             TextButton(
               child: const Text('Tidak'),
               onPressed: () {
-                Navigator.of(context).pop(); // Tutup dialog
+                Navigator.of(context).pop();
               },
             ),
             TextButton(
               child: const Text('Iya'),
               onPressed: () {
-                Navigator.of(context).pop(); // Tutup dialog
-                // Lakukan logout dan navigasi ke halaman login
+                Navigator.of(context).pop();
                 Navigator.pushAndRemoveUntil(
                   context,
                   MaterialPageRoute(builder: (context) => const LoginScreen()),
-                  (Route<dynamic> route) => false, // Hapus stack sebelumnya
+                  (Route<dynamic> route) => false,
                 );
               },
             ),
           ],
         );
       },
+    );
+  }
+}
+
+class ChangePasswordWidget extends StatefulWidget {
+  const ChangePasswordWidget({super.key});
+
+  @override
+  _ChangePasswordWidgetState createState() => _ChangePasswordWidgetState();
+}
+
+class _ChangePasswordWidgetState extends State<ChangePasswordWidget> {
+  final TextEditingController _oldPasswordController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPasswordController = TextEditingController();
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  bool _isLoading = false;
+
+  void _changePassword() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      User? user = _auth.currentUser;
+
+      if (user != null) {
+        // Verifikasi password lama
+        String email = user.email!;
+        AuthCredential credential = EmailAuthProvider.credential(
+          email: email,
+          password: _oldPasswordController.text,
+        );
+
+        await user.reauthenticateWithCredential(credential); // Jika salah akan throw exception
+
+        // Lanjutkan jika reauthentication sukses
+        if (_passwordController.text != _confirmPasswordController.text) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Password baru tidak sama!')),
+          );
+          return;
+        }
+
+        await user.updatePassword(_passwordController.text);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Password berhasil diganti!')),
+        );
+      }
+    } on FirebaseAuthException catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: ${e.message}')),
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.teal),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: const Text(
+          'ganti password',
+          style: TextStyle(color: Colors.teal, fontSize: 24),
+        ),
+        centerTitle: true,
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            TextField(
+              controller: _oldPasswordController,
+              obscureText: true,
+              decoration: const InputDecoration(
+                labelText: 'password lama',
+                hintText: 'password lama',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _passwordController,
+              obscureText: true,
+              decoration: const InputDecoration(
+                labelText: 'password baru',
+                hintText: 'password baru',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _confirmPasswordController,
+              obscureText: true,
+              decoration: const InputDecoration(
+                labelText: 'ulangi password baru',
+                hintText: 'ulangi password baru',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 32),
+            _isLoading
+                ? const CircularProgressIndicator()
+                : ElevatedButton(
+                    onPressed: _changePassword,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.teal,
+                    ),
+                    child: const Text('ganti'),
+                  ),
+          ],
+        ),
+      ),
     );
   }
 }
