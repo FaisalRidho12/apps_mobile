@@ -1,11 +1,13 @@
 import 'dart:async';
-import 'profile.dart';
-import 'iot.dart'; // Import halaman IoT
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart'; // Import Firebase Auth
-import 'package:flutter_local_notifications/flutter_local_notifications.dart'; // Import untuk notifikasi
+import 'package:flutter_local_notifications/flutter_local_notifications.dart'; // Import umtuk notifications
 import 'package:audioplayers/audioplayers.dart'; // Import for alarm sound
+import 'package:shared_preferences/shared_preferences.dart';
 import 'add_schedule.dart'; // Import halaman Tambahkan Jadwal
+import 'iot.dart';
+import 'profile.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -21,15 +23,18 @@ class _HomeScreenState extends State<HomeScreen> {
   Timer? _timer;
   FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
   AudioPlayer audioPlayer = AudioPlayer();
-  
   bool isAlarmPlaying = false; // Menambahkan status alarm
+  String _username = "User";
 
   @override
   void initState() {
     super.initState();
     _initializeNotifications();
     _startAutoSlide(); // Memulai animasi otomatis 
+    _loadSchedules();
     _checkSchedules();
+    _loadUsername();
+    
   }
 
   @override
@@ -68,6 +73,24 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+// Fungsi untuk menyimpan data jadwal ke SharedPreferences
+  Future<void> _saveSchedules() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String encodedData = jsonEncode(schedules); // Encode data ke format JSON
+    await prefs.setString('schedules', encodedData); // Simpan data
+  }
+
+  // Fungsi untuk memuat data jadwal dari SharedPreferences
+  Future<void> _loadSchedules() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? encodedData = prefs.getString('schedules');
+    if (encodedData != null) {
+      setState(() {
+        schedules = List<Map<String, dynamic>>.from(jsonDecode(encodedData)); // Decode data dari JSON
+      });
+    }
+  }
+
   // Fungsi untuk mengecek apakah jadwal sudah mencapai waktunya
   void _checkSchedules() {
     _timer = Timer.periodic(const Duration(minutes: 1), (Timer timer) {
@@ -94,8 +117,8 @@ class _HomeScreenState extends State<HomeScreen> {
   void _showNotification(String scheduleName) async {
     const AndroidNotificationDetails androidPlatformChannelSpecifics =
         AndroidNotificationDetails(
-      'your_channel_id',
-      'your_channel_name',
+      'Notfikasi jadwal',
+      'Pengingat jadwal',
       importance: Importance.max,
       priority: Priority.high,
     );
@@ -132,19 +155,46 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  String get username {
+    // Fungsi untuk memuat username dari SharedPreferences
+  Future<void> _loadUsername() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _username = prefs.getString('username') ?? "User"; // Muat username atau default ke "User"
+    });
+  }
+ 
+
+ // Fungsi untuk menyimpan username ke SharedPreferences
+  Future<void> _saveUsername(String username) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setString('username', username); // Simpan username
+  }
+
+  // Ambil username dari pengguna yang login
+  void _getAndSaveUsername() {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
-      print("Current User: ${user.displayName}");
-      return user.displayName ?? user.email?.split('@')[0] ?? "User";
-    } else {
-      print("No user is currently logged in.");
-      return "User";
+      _username = user.displayName ?? user.email?.split('@')[0] ?? "User";
+      _saveUsername(_username); // Simpan username
     }
   }
 
+  // String get username {
+  //   final user = FirebaseAuth.instance.currentUser;
+  //   if (user != null) {
+  //     print("Current User: ${user.displayName}");
+  //     return user.displayName ?? user.email?.split('@')[0] ?? "User";
+  //   } else {
+  //     print("No user is currently logged in.");
+  //     return "User";
+  //   }
+  // }
+
   @override
   Widget build(BuildContext context) {
+        // Panggil untuk menyimpan username jika ada pengguna yang login
+    _getAndSaveUsername();
+    
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.transparent,
@@ -246,6 +296,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         'time': result['time'],
                         'isOn': true,
                       });
+                      _saveSchedules();
                     });
                   }
                 },
@@ -292,6 +343,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 onChanged: (value) {
                                   setState(() {
                                     schedules[index]['isOn'] = value;
+                                    _saveSchedules();
                                     if (value){
                                       _checkSchedules();
                                     } else {
@@ -310,32 +362,27 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentPage, // Track the current index
+        currentIndex: 0, // Menetapkan Home sebagai halaman awal
         onTap: (int index) {
-          setState(() { 
-            _currentPage = index; // Update current page index
-          });
-
-          // Handle navigation based on the index
-          if (index == 0) { // Home page
-            Navigator.push(
+          if (index == 0) {
+            Navigator.pushReplacement(
               context,
               MaterialPageRoute(
                 builder: (context) => const HomeScreen(),
               ),
             );
-          } else if (index == 1) { // IoT page
-            Navigator.push(
+          } else if (index == 1) {
+            Navigator.pushReplacement(
               context,
               MaterialPageRoute(
-                builder: (context) => const IoTContent(), // Arahkan ke halaman IoT
+                builder: (context) => const IoTScreen(), // Mengarahkan ke halaman IoT
               ),
             );
-          } else if (index == 2) { // Profile page
-            Navigator.push(
+          } else if (index == 2) {
+            Navigator.pushReplacement(
               context,
               MaterialPageRoute(
-                builder: (context) => const ProfileScreen(),
+                builder: (context) => const ProfileScreen(), // Mengarahkan ke halaman Profile
               ),
             );
           }
@@ -390,6 +437,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       'time': result['time'],
                       'isOn': schedules[index]['isOn'],
                     };
+                    _saveSchedules();
                   });
                 }
               },
@@ -399,6 +447,7 @@ class _HomeScreenState extends State<HomeScreen> {
               onPressed: () {
                 setState(() {
                   schedules.removeAt(index);
+                  _saveSchedules();
                 });
                 Navigator.pop(context);
               },
