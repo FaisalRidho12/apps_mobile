@@ -23,7 +23,7 @@ class _SignupScreenState extends State<SignupScreen> {
   Future<void> _signup() async {
     if (_passwordController.text != _confirmPasswordController.text) {
       setState(() {
-        errorMessage = "Passwords do not match";
+        errorMessage = "Passwords Salah";
       });
       return;
     }
@@ -42,20 +42,12 @@ class _SignupScreenState extends State<SignupScreen> {
         // Tambahkan data lain yang ingin disimpan
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Registrasi Berhasil!'),
-        backgroundColor: Colors.green,
-        behavior: SnackBarBehavior.floating,
-        margin: EdgeInsets.only(top: 20, left: 10, right: 10),
-        duration: Duration(seconds: 3),
-      ),
-    );
 
       // Navigasi ke halaman login setelah pendaftaran berhasil
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const LoginScreen()),
+        MaterialPageRoute(builder: (context) => const LoginScreen(showSuccessMessage: true),
+        ),
       );
     } catch (e) {
       setState(() {

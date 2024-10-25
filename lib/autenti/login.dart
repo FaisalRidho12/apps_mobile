@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:shared_preferences/shared_preferences.dart';  // Import SharedPreferences
+import 'package:shared_preferences/shared_preferences.dart';
 import 'signup.dart';
 import 'package:cat_care/pages/home.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  final bool showSuccessMessage;
+
+  const LoginScreen({super.key, this.showSuccessMessage = false});
 
   @override
   _LoginScreenState createState() => _LoginScreenState();
@@ -19,6 +21,49 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
   bool _obscuretext = true;
 
+  @override
+  void initState() {
+    super.initState();
+
+    if (widget.showSuccessMessage) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _showTopOverlayMessage("Registrasi Berhasil!");
+      });
+    }
+  }
+
+  void _showTopOverlayMessage(String message) {
+    final overlay = Overlay.of(context);
+    final overlayEntry = OverlayEntry(
+      builder: (context) => Positioned(
+        top: 50,
+        left: 20,
+        right: 20,
+        child: Material(
+          color: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: BoxDecoration(
+              color: Colors.green,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    overlay?.insert(overlayEntry);
+
+    Future.delayed(const Duration(seconds: 3)).then((_) {
+      overlayEntry.remove();
+    });
+  }
+
   Future<void> _login() async {
     if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
       setState(() {
@@ -29,30 +74,27 @@ class _LoginScreenState extends State<LoginScreen> {
 
     setState(() {
       _isLoading = true;
-      errorMessage = null; // Reset error message
+      errorMessage = null;
     });
 
     try {
-      // Sign in user
       await _auth.signInWithEmailAndPassword(
         email: _emailController.text,
         password: _passwordController.text,
       );
-      
-      // Simpan status login ke SharedPreferences
+
       SharedPreferences prefs = await SharedPreferences.getInstance();
-      prefs.setBool('isLoggedIn', true);  // Menyimpan status login
+      prefs.setBool('isLoggedIn', true);
 
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const HomeScreen()), // Ganti dengan HomeScreen Anda
+        MaterialPageRoute(builder: (context) => const HomeScreen()),
       );
     } on FirebaseAuthException catch (e) {
-      print('Error code: ${e.code}'); // Log kode error untuk debugging
       setState(() {
         switch (e.code) {
           case 'wrong-password':
-            errorMessage = 'Email atau password salah.'; // Pesan untuk email/password salah
+            errorMessage = 'Email atau password salah.';
             break;
           case 'invalid-email':
             errorMessage = 'Alamat email tidak valid.';
@@ -73,7 +115,7 @@ class _LoginScreenState extends State<LoginScreen> {
       });
     } finally {
       setState(() {
-        _isLoading = false; // Menghilangkan indikator loading
+        _isLoading = false;
       });
     }
   }
@@ -93,7 +135,7 @@ class _LoginScreenState extends State<LoginScreen> {
       });
     } on FirebaseAuthException catch (e) {
       setState(() {
-        errorMessage = e.message; // Tampilkan pesan error dari Firebase
+        errorMessage = e.message;
       });
     } catch (e) {
       setState(() {
@@ -123,7 +165,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 20),
                 Image.asset(
-                  'assets/images/logo2.png', // Path ikon hewan
+                  'assets/images/logo2.png',
                   height: 150,
                 ),
                 const SizedBox(height: 20),
