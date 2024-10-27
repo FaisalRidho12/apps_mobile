@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart'; // Import Firebase Auth
 import 'package:flutter_local_notifications/flutter_local_notifications.dart'; // Import umtuk notifications
 import 'package:audioplayers/audioplayers.dart'; // Import for alarm sound
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:workmanager/workmanager.dart';
 import 'add_schedule.dart'; // Import halaman Tambahkan Jadwal
 import 'iot.dart';
 import 'profile.dart';
@@ -24,7 +25,6 @@ class _HomeScreenState extends State<HomeScreen> {
   FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
   AudioPlayer audioPlayer = AudioPlayer();
   bool isAlarmPlaying = false; // Menambahkan status alarm
-  String _username = "User";
 
   @override
   void initState() {
@@ -33,8 +33,8 @@ class _HomeScreenState extends State<HomeScreen> {
     _startAutoSlide(); // Memulai animasi otomatis 
     _loadSchedules();
     _checkSchedules();
-    _loadUsername();
-    
+    Workmanager().initialize(callbackDispatcher, isInDebugMode: false);
+    _scheduleBackgroundAlarms();
   }
 
   @override
@@ -50,8 +50,7 @@ class _HomeScreenState extends State<HomeScreen> {
     const AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings('@mipmap/ic_launcher');
     const InitializationSettings initializationSettings =
-        InitializationSettings(android: initializationSettingsAndroid);
-    
+        InitializationSettings(android: initializationSettingsAndroid);    
     flutterLocalNotificationsPlugin.initialize(initializationSettings);
   }
 
@@ -84,34 +83,73 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _loadSchedules() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? encodedData = prefs.getString('schedules');
-    if (encodedData != null) {
-      setState(() {
-        schedules = List<Map<String, dynamic>>.from(jsonDecode(encodedData)); // Decode data dari JSON
-      });
+    setState(() {
+      schedules = List<Map<String, dynamic>>.from(jsonDecode(encodedData!)); // Decode data dari JSON
+    });
+    }
+
+  void _scheduleBackgroundAlarms() {
+    for (var schedule in schedules) {
+      if (schedule['isOn'] == true) {
+        DateTime scheduleDateTime = _parseScheduleDateTime(schedule['time']);
+        // DateTime scheduleDateTime = DateTime.parse("${schedule['date']} ${schedule['time']}");
+        Duration timeDifference = scheduleDateTime.difference(DateTime.now());
+        if (timeDifference.isNegative) continue;
+
+        Workmanager().registerOneOffTask(
+          "alarm_${schedule['name']}",
+          "alarmTask",
+          inputData: {
+            "name": schedule['name'],
+            //"date" : schedule['date'],
+            "time": schedule['time'],
+          },
+          initialDelay: timeDifference,
+        );
+      }
     }
   }
 
-  // Fungsi untuk mengecek apakah jadwal sudah mencapai waktunya
-  void _checkSchedules() {
-    _timer = Timer.periodic(const Duration(minutes: 1), (Timer timer) {
-      final now = TimeOfDay.now();
-      for (var schedule in schedules) {
-        if (schedule['isOn'] == true) {
-          TimeOfDay scheduleTime = _parseTime(schedule['time']);
-          if (now.hour == scheduleTime.hour && now.minute == scheduleTime.minute) {
-            _showNotification(schedule['name']);
-            _playAlarm(); // Memanggil fungsi untuk memutar alarm
-          }
-        }
-      }
+  DateTime _parseScheduleDateTime(String time) {
+    final date = DateTime.now();
+    final timeParts = time.split(':');
+    return DateTime(
+      date.year,
+      date.month,
+      date.day,
+      int.parse(timeParts[0]),
+      int.parse(timeParts[1]),
+    );
+  }
+
+  static void callbackDispatcher() {
+    Workmanager().executeTask((task, inputData) async {
+      final flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+      const AndroidNotificationDetails androidPlatformChannelSpecifics =
+          AndroidNotificationDetails(
+        'Notification Channel ID',
+        'Schedule Reminder',
+        importance: Importance.max,
+        priority: Priority.high,
+      );
+      const NotificationDetails platformChannelSpecifics =
+          NotificationDetails(android: androidPlatformChannelSpecifics);
+
+      await flutterLocalNotificationsPlugin.show(
+        0,
+        'Scheduled Time Reached',
+        'It\'s time for ${inputData?['name']}!',
+        platformChannelSpecifics,
+      );
+
+      final audioPlayer = AudioPlayer();
+      await audioPlayer.setSource(AssetSource('alarm_sound.mp3'));
+      audioPlayer.setReleaseMode(ReleaseMode.loop);
+      await audioPlayer.resume();
+      return Future.value(true);
     });
   }
 
-  // Parse waktu dari string ke TimeOfDay
-  TimeOfDay _parseTime(String time) {
-    final parts = time.split(':');
-    return TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]));
-  }
 
   // Tampilkan notifikasi
   void _showNotification(String scheduleName) async {
@@ -133,68 +171,72 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Mainkan suara alarm
   void _playAlarm() async {
-    if (!isAlarmPlaying) { // Memastikan alarm hanya diputar sekali
-      isAlarmPlaying = true; // Mengubah status alarm
-      print("Memulai alarm...");
+    if (!isAlarmPlaying) {
+      isAlarmPlaying = true;
       await audioPlayer.setSource(AssetSource('alarm_sound.mp3'));
-      print("Sumber audio diatur...");
-      audioPlayer.setReleaseMode(ReleaseMode.loop); // Mengulangi suara alarm
+      audioPlayer.setReleaseMode(ReleaseMode.loop);
       await audioPlayer.resume();
-      print("Alarm diputar...");
     }
   }
 
-  // Matikan suara alarm
   void _stopAlarm() async {
     if (isAlarmPlaying) {
-      isAlarmPlaying = false; // Mengubah status alarm
-      await audioPlayer.stop(); // Hentikan suara alarm
-      print("Alarm dihentikan.");
+      isAlarmPlaying = false;
+      await audioPlayer.stop();
     }
   }
 
-    // Fungsi untuk memuat username dari SharedPreferences
-  Future<void> _loadUsername() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _username = prefs.getString('username') ?? "User"; // Muat username atau default ke "User"
+  // Fungsi untuk mengecek apakah jadwal sudah mencapai waktunya
+  void _checkSchedules() {
+    _timer = Timer.periodic(const Duration(minutes: 1), (Timer timer) {
+      final now = TimeOfDay.now();
+      for (var schedule in schedules) {
+        if (schedule['isOn'] == true) {
+          TimeOfDay scheduleTime = _parseTime(schedule['time']);
+          if (now.hour == scheduleTime.hour && now.minute == scheduleTime.minute) {
+            _showNotification(schedule['name']);
+            _playAlarm(); // Memanggil fungsi untuk memutar alarm
+          }
+        }
+      }
     });
   }
- 
 
- // Fungsi untuk menyimpan username ke SharedPreferences
-  Future<void> _saveUsername(String username) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setString('username', username); // Simpan username
+//   void _checkSchedules() {
+//   _timer = Timer.periodic(const Duration(minutes: 1), (Timer timer) {
+//     final now = DateTime.now();
+//     for (var schedule in schedules) {
+//       if (schedule['isOn'] == true) {
+//         DateTime scheduleDateTime = DateTime.parse("${schedule['date']} ${schedule['time']}");
+//         if (now.year == scheduleDateTime.year &&
+//             now.month == scheduleDateTime.month &&
+//             now.day == scheduleDateTime.day &&
+//             now.hour == scheduleDateTime.hour &&
+//             now.minute == scheduleDateTime.minute) {
+//           _showNotification(schedule['name']);
+//           _playAlarm();
+//         }
+//       }
+//     }
+//   });
+// }
+
+  // Parse waktu dari string ke TimeOfDay
+  TimeOfDay _parseTime(String time) {
+    final parts = time.split(':');
+    return TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]));
   }
 
-  // Ambil username dari pengguna yang login
-  void _getAndSaveUsername() {
+
+
+  String get username {
     final user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      _username = user.displayName ?? user.email?.split('@')[0] ?? "User";
-      _saveUsername(_username); // Simpan username
-    }
+    return user != null ? user.email?.split('@')[0] ?? "User" : "User";
   }
-
-  // String get username {
-  //   final user = FirebaseAuth.instance.currentUser;
-  //   if (user != null) {
-  //     print("Current User: ${user.displayName}");
-  //     return user.displayName ?? user.email?.split('@')[0] ?? "User";
-  //   } else {
-  //     print("No user is currently logged in.");
-  //     return "User";
-  //   }
-  // }
 
   @override
   Widget build(BuildContext context) {
-        // Panggil untuk menyimpan username jika ada pengguna yang login
-    _getAndSaveUsername();
-    
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.transparent,
@@ -345,7 +387,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     schedules[index]['isOn'] = value;
                                     _saveSchedules();
                                     if (value){
-                                      _checkSchedules();
+                                      // _checkSchedules();
                                     } else {
                                       _stopAlarm();
                                     }
