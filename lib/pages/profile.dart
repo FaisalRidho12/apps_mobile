@@ -1,8 +1,9 @@
-import 'package:cat_care/autenti/login.dart'; // Import halaman login
+import 'package:cat_care/autenti/login.dart';
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart'; // Tambahkan Firebase Authentication
+import 'package:firebase_auth/firebase_auth.dart';
 import 'home.dart';
 import 'iot.dart';
+
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -12,7 +13,7 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  int _currentIndex = 2; // Default index untuk Profil
+  int _currentIndex = 2;
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +38,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           children: [
             const CircleAvatar(
               radius: 40,
-              backgroundImage: AssetImage('assets/images/pp.png'), // Gambar profil
+              backgroundImage: AssetImage('assets/images/pp.png'),
             ),
             const SizedBox(height: 16),
             const Text(
@@ -56,10 +57,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               );
             }),
             _buildMenuItem(context, Icons.notifications, 'Notifikasi', () {
-              // Aksi ketika Notifikasi ditekan
+              
             }),
             _buildMenuItem(context, Icons.info_outline, 'Tentang Kami', () {
-              // Aksi ketika Tentang Kami ditekan
+              
             }),
           ],
         ),
@@ -181,12 +182,12 @@ class SettingsScreen extends StatelessWidget {
             ),
             const SizedBox(height: 32),
             _buildAccountMenuItem(Icons.person_add, 'Tambahkan Akun', () {
-              // Aksi Tambahkan Akun
+              
             }),
             _buildAccountMenuItem(Icons.delete, 'Hapus Akun', () {
-              // Aksi Hapus Akun
+              _showDeleteAccountDialog(context);
             }),
-            _buildAccountMenuItem(Icons.edit, 'ganti password', () {
+            _buildAccountMenuItem(Icons.edit, 'Ganti Password', () {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => const ChangePasswordWidget()),
@@ -234,6 +235,51 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
+  void _showDeleteAccountDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Konfirmasi Penghapusan Akun'),
+          content: const Text('Apakah Anda yakin ingin menghapus akun ini?'),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Tidak'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text('Iya'),
+              onPressed: () async {
+                Navigator.of(context).pop();
+                await _deleteAccount(context);
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _deleteAccount(BuildContext context) async {
+    try {
+      User? user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        await user.delete();
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
+          (Route<dynamic> route) => false,
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error menghapus akun: $e')),
+      );
+    }
+  }
+
   void _showLogoutConfirmationDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -251,7 +297,7 @@ class SettingsScreen extends StatelessWidget {
             TextButton(
               child: const Text('Iya'),
               onPressed: () {
-                Navigator.of(context).pop();
+                FirebaseAuth.instance.signOut();
                 Navigator.pushAndRemoveUntil(
                   context,
                   MaterialPageRoute(builder: (context) => const LoginScreen()),
@@ -289,16 +335,14 @@ class _ChangePasswordWidgetState extends State<ChangePasswordWidget> {
       User? user = _auth.currentUser;
 
       if (user != null) {
-        // Verifikasi password lama
         String email = user.email!;
         AuthCredential credential = EmailAuthProvider.credential(
           email: email,
           password: _oldPasswordController.text,
         );
 
-        await user.reauthenticateWithCredential(credential); // Jika salah akan throw exception
+        await user.reauthenticateWithCredential(credential);
 
-        // Lanjutkan jika reauthentication sukses
         if (_passwordController.text != _confirmPasswordController.text) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Password baru tidak sama!')),
@@ -311,9 +355,9 @@ class _ChangePasswordWidgetState extends State<ChangePasswordWidget> {
           const SnackBar(content: Text('Password berhasil diganti!')),
         );
       }
-    } on FirebaseAuthException catch (e) {
+    } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: ${e.message}')),
+        SnackBar(content: Text('Error: $e')),
       );
     } finally {
       setState(() {
@@ -333,7 +377,7 @@ class _ChangePasswordWidgetState extends State<ChangePasswordWidget> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: const Text(
-          'ganti password',
+          'Ganti Password',
           style: TextStyle(color: Colors.teal, fontSize: 24),
         ),
         centerTitle: true,
@@ -347,8 +391,8 @@ class _ChangePasswordWidgetState extends State<ChangePasswordWidget> {
               controller: _oldPasswordController,
               obscureText: true,
               decoration: const InputDecoration(
-                labelText: 'password lama',
-                hintText: 'password lama',
+                labelText: 'Password Lama',
+                hintText: 'Password Lama',
                 border: OutlineInputBorder(),
               ),
             ),
@@ -357,8 +401,8 @@ class _ChangePasswordWidgetState extends State<ChangePasswordWidget> {
               controller: _passwordController,
               obscureText: true,
               decoration: const InputDecoration(
-                labelText: 'password baru',
-                hintText: 'password baru',
+                labelText: 'Password Baru',
+                hintText: 'Password Baru',
                 border: OutlineInputBorder(),
               ),
             ),
@@ -367,8 +411,8 @@ class _ChangePasswordWidgetState extends State<ChangePasswordWidget> {
               controller: _confirmPasswordController,
               obscureText: true,
               decoration: const InputDecoration(
-                labelText: 'ulangi password baru',
-                hintText: 'ulangi password baru',
+                labelText: 'Ulangi Password Baru',
+                hintText: 'Ulangi Password Baru',
                 border: OutlineInputBorder(),
               ),
             ),
@@ -380,7 +424,7 @@ class _ChangePasswordWidgetState extends State<ChangePasswordWidget> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.teal,
                     ),
-                    child: const Text('ganti'),
+                    child: const Text('Ganti'),
                   ),
           ],
         ),
