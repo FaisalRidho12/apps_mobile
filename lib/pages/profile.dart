@@ -1,6 +1,6 @@
-import 'package:cat_care/autenti/login.dart'; // Import halaman login
+import 'package:cat_care/autenti/login.dart';
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart'; // Tambahkan Firebase Authentication
+import 'package:firebase_auth/firebase_auth.dart';
 import 'home.dart';
 import 'iot.dart';
 
@@ -12,7 +12,7 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  int _currentIndex = 2; // Default index untuk Profil
+  int _currentIndex = 2;
 
   @override
   Widget build(BuildContext context) {
@@ -22,12 +22,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.teal),
+          icon: const Icon(Icons.arrow_back, color: Color(0xFF594545)),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: const Text(
           'Profile',
-          style: TextStyle(color: Colors.teal, fontSize: 24),
+          style: TextStyle(color: Color(0xFF594545), fontSize: 24),
         ),
         centerTitle: true,
       ),
@@ -37,12 +37,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
           children: [
             const CircleAvatar(
               radius: 40,
-              backgroundImage: AssetImage('assets/images/pp.png'), // Gambar profil
+              backgroundImage: AssetImage('assets/images/pp.png'),
             ),
             const SizedBox(height: 16),
             const Text(
               'Username',
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.teal),
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF594545)),
             ),
             const Text(
               'username@gmail.com',
@@ -56,10 +56,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               );
             }),
             _buildMenuItem(context, Icons.notifications, 'Notifikasi', () {
-              // Aksi ketika Notifikasi ditekan
+              
             }),
             _buildMenuItem(context, Icons.info_outline, 'Tentang Kami', () {
-              // Aksi ketika Tentang Kami ditekan
+              
             }),
           ],
         ),
@@ -87,11 +87,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
         child: Row(
           children: [
-            Icon(icon, color: Colors.teal),
+            Icon(icon, color: Color(0xFF594545)),
             const SizedBox(width: 16),
             Text(
               title,
-              style: const TextStyle(fontSize: 18, color: Colors.teal),
+              style: const TextStyle(fontSize: 18, color: Color(0xFF594545)),
             ),
             const Spacer(),
           ],
@@ -135,7 +135,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           label: 'Profile',
         ),
       ],
-      selectedItemColor: Colors.teal,
+      selectedItemColor: Color(0xFF594545),
       unselectedItemColor: Colors.grey,
       showUnselectedLabels: true,
     );
@@ -153,12 +153,12 @@ class SettingsScreen extends StatelessWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.teal),
+          icon: const Icon(Icons.arrow_back, color: Color(0xFF594545)),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: const Text(
           'Akun',
-          style: TextStyle(color: Colors.teal, fontSize: 24),
+          style: TextStyle(color: Color(0xFF594545), fontSize: 24),
         ),
         centerTitle: true,
       ),
@@ -173,7 +173,7 @@ class SettingsScreen extends StatelessWidget {
             const SizedBox(height: 16),
             const Text(
               'Username',
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.teal),
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF594545)),
             ),
             const Text(
               'username@gmail.com',
@@ -181,12 +181,12 @@ class SettingsScreen extends StatelessWidget {
             ),
             const SizedBox(height: 32),
             _buildAccountMenuItem(Icons.person_add, 'Tambahkan Akun', () {
-              // Aksi Tambahkan Akun
+              
             }),
             _buildAccountMenuItem(Icons.delete, 'Hapus Akun', () {
-              // Aksi Hapus Akun
+              _showDeleteAccountDialog(context);
             }),
-            _buildAccountMenuItem(Icons.edit, 'ganti password', () {
+            _buildAccountMenuItem(Icons.edit, 'Ganti Password', () {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => const ChangePasswordWidget()),
@@ -220,17 +220,42 @@ class SettingsScreen extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Icon(icon, color: Colors.teal),
+            Icon(icon, color: Color(0xFF594545)),
             const SizedBox(width: 16),
             Text(
               title,
-              style: const TextStyle(fontSize: 18, color: Colors.teal),
+              style: const TextStyle(fontSize: 18, color: Color(0xFF594545)),
             ),
             const Spacer(),
-            const Icon(Icons.arrow_forward_ios, color: Colors.teal),
+            const Icon(Icons.arrow_forward_ios, color: Color(0xFF594545)),
           ],
         ),
       ),
+    );
+  }
+
+  void _showDeleteAccountDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Hapus Akun'),
+          content: const Text('Apakah Anda yakin ingin menghapus akun ini?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Batal'),
+            ),
+            TextButton(
+              onPressed: () {
+                // Implement delete account functionality
+                Navigator.of(context).pop();
+              },
+              child: const Text('Hapus'),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -239,25 +264,24 @@ class SettingsScreen extends StatelessWidget {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Konfirmasi Logout'),
+          title: const Text('Logout'),
           content: const Text('Apakah Anda yakin ingin keluar?'),
-          actions: <Widget>[
+          actions: [
             TextButton(
-              child: const Text('Tidak'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Batal'),
             ),
             TextButton(
-              child: const Text('Iya'),
               onPressed: () {
-                Navigator.of(context).pop();
+                // Implement logout functionality
+                FirebaseAuth.instance.signOut();
                 Navigator.pushAndRemoveUntil(
                   context,
                   MaterialPageRoute(builder: (context) => const LoginScreen()),
                   (Route<dynamic> route) => false,
                 );
               },
+              child: const Text('Keluar'),
             ),
           ],
         );
@@ -266,122 +290,67 @@ class SettingsScreen extends StatelessWidget {
   }
 }
 
-class ChangePasswordWidget extends StatefulWidget {
+class ChangePasswordWidget extends StatelessWidget {
   const ChangePasswordWidget({super.key});
-
-  @override
-  _ChangePasswordWidgetState createState() => _ChangePasswordWidgetState();
-}
-
-class _ChangePasswordWidgetState extends State<ChangePasswordWidget> {
-  final TextEditingController _oldPasswordController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController = TextEditingController();
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  bool _isLoading = false;
-
-  void _changePassword() async {
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      User? user = _auth.currentUser;
-
-      if (user != null) {
-        // Verifikasi password lama
-        String email = user.email!;
-        AuthCredential credential = EmailAuthProvider.credential(
-          email: email,
-          password: _oldPasswordController.text,
-        );
-
-        await user.reauthenticateWithCredential(credential); // Jika salah akan throw exception
-
-        // Lanjutkan jika reauthentication sukses
-        if (_passwordController.text != _confirmPasswordController.text) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Password baru tidak sama!')),
-          );
-          return;
-        }
-
-        await user.updatePassword(_passwordController.text);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Password berhasil diganti!')),
-        );
-      }
-    } on FirebaseAuthException catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: ${e.message}')),
-      );
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        title: const Text('Ganti Password', style: TextStyle(color: Color(0xFF594545))),
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.teal),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: const Text(
-          'ganti password',
-          style: TextStyle(color: Colors.teal, fontSize: 24),
-        ),
-        centerTitle: true,
+        iconTheme: const IconThemeData(color: Color(0xFF594545)),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            TextField(
-              controller: _oldPasswordController,
+            const Text(
+              'Password Lama',
+              style: TextStyle(fontSize: 16, color: Color(0xFF594545)),
+            ),
+            const TextField(
               obscureText: true,
-              decoration: const InputDecoration(
-                labelText: 'password lama',
-                hintText: 'password lama',
+              decoration: InputDecoration(
                 border: OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 16),
-            TextField(
-              controller: _passwordController,
+            const Text(
+              'Password Baru',
+              style: TextStyle(fontSize: 16, color: Color(0xFF594545)),
+            ),
+            const TextField(
               obscureText: true,
-              decoration: const InputDecoration(
-                labelText: 'password baru',
-                hintText: 'password baru',
+              decoration: InputDecoration(
                 border: OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 16),
-            TextField(
-              controller: _confirmPasswordController,
+            const Text(
+              'Konfirmasi Password Baru',
+              style: TextStyle(fontSize: 16, color: Color(0xFF594545)),
+            ),
+            const TextField(
               obscureText: true,
-              decoration: const InputDecoration(
-                labelText: 'ulangi password baru',
-                hintText: 'ulangi password baru',
+              decoration: InputDecoration(
                 border: OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 32),
-            _isLoading
-                ? const CircularProgressIndicator()
-                : ElevatedButton(
-                    onPressed: _changePassword,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.teal,
-                    ),
-                    child: const Text('ganti'),
-                  ),
+            Center(
+              child: ElevatedButton(
+                onPressed: () {
+                  // Implement password change functionality
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF594545),
+                ),
+                child: const Text('Ganti Password'),
+              ),
+            ),
           ],
         ),
       ),
