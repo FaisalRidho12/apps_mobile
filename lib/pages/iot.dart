@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'home.dart';
 import 'profile.dart'; // Import profile.dart
 import 'package:http/http.dart' as http;
+import 'package:google_fonts/google_fonts.dart';
 
 class IoTContent extends StatefulWidget {
   const IoTContent({super.key});
@@ -94,20 +95,48 @@ class _IoTContentState extends State<IoTContent> {
           mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            const SizedBox(height: 40),
-            const Text(
-              'Kontrol IoT',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Colors.teal,
+            Container(
+              width: double.infinity, // Make the container full width
+              color:
+                  const Color(0xFFFFF8EA), // Set the background color to brown
+              padding: const EdgeInsets.all(8.0), // Add some padding
+              child: Center(
+                // Center the text horizontally
+                child: Text(
+                  'Kontrol IoT',
+                  style: GoogleFonts.poppins(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Color(
+                        0xFF594545), // Change text color to white for contrast
+                  ),
+                ),
               ),
             ),
             const SizedBox(height: 20),
-            Image.asset(
-              'assets/images/image-iot1.png',
-              height: 200,
-              fit: BoxFit.cover,
+            Container(
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFF8EA), // Warna background coklat muda
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.5),
+                    spreadRadius: 5,
+                    blurRadius: 7,
+                    offset: const Offset(0, 3), // perubahan posisi bayangan
+                  ),
+                ],
+                borderRadius: BorderRadius.circular(
+                    12), // Opsional, untuk membuat sudut lebih halus
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(
+                    8.0), // Memberikan sedikit padding di sekitar gambar
+                child: Image.asset(
+                  'assets/images/image-iot1.png',
+                  height: 200,
+                  fit: BoxFit.cover,
+                ),
+              ),
             ),
             const SizedBox(height: 20),
             Row(
@@ -121,7 +150,7 @@ class _IoTContentState extends State<IoTContent> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    backgroundColor: Colors.white,
+                    backgroundColor: const Color(0xFFFFF8EA),
                     shadowColor: Colors.grey,
                   ),
                   child: SizedBox(
@@ -132,15 +161,15 @@ class _IoTContentState extends State<IoTContent> {
                       children: [
                         Image.asset(
                           'assets/icons1/monitoring-icon.png',
-                          color: Colors.teal,
+                          color: const Color(0xFF594545),
                           height: 50,
                           width: 50,
                         ),
                         const SizedBox(height: 8),
-                        const Text(
+                        Text(
                           'Monitoring',
-                          style: TextStyle(
-                            color: Colors.teal,
+                          style: GoogleFonts.poppins(
+                            color: Color(0xFF594545),
                             fontSize: 18,
                           ),
                         ),
@@ -156,7 +185,7 @@ class _IoTContentState extends State<IoTContent> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    backgroundColor: Colors.white,
+                    backgroundColor: const Color(0xFFFFF8EA),
                     shadowColor: Colors.grey,
                   ),
                   child: SizedBox(
@@ -166,16 +195,16 @@ class _IoTContentState extends State<IoTContent> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Image.asset(
-                          'assets/icons1/makan-icon.png',
-                          color: Colors.teal,
+                          'assets/icons1/pakan-icon.png',
+                          color: const Color(0xFF594545),
                           height: 50,
                           width: 50,
                         ),
                         const SizedBox(height: 8),
-                        const Text(
+                        Text(
                           'Pakan',
-                          style: TextStyle(
-                            color: Colors.teal,
+                          style: GoogleFonts.poppins(
+                            color: Color(0xFF594545),
                             fontSize: 18,
                           ),
                         ),
