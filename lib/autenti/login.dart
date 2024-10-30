@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'signup.dart';
 import 'package:cat_care/pages/home.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  final bool showSuccessMessage;
+
+  const LoginScreen({super.key, this.showSuccessMessage = false});
 
   @override
   _LoginScreenState createState() => _LoginScreenState();
@@ -18,17 +21,60 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
   bool _obscuretext = true;
 
+  @override
+  void initState() {
+    super.initState();
+
+    if (widget.showSuccessMessage) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _showTopOverlayMessage("Registrasi Berhasil!");
+      });
+    }
+  }
+
+  void _showTopOverlayMessage(String message) {
+    final overlay = Overlay.of(context);
+    final overlayEntry = OverlayEntry(
+      builder: (context) => Positioned(
+        top: 50,
+        left: 20,
+        right: 20,
+        child: Material(
+          color: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: BoxDecoration(
+              color: Colors.green,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    overlay?.insert(overlayEntry);
+
+    Future.delayed(const Duration(seconds: 3)).then((_) {
+      overlayEntry.remove();
+    });
+  }
+
   Future<void> _login() async {
     if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
       setState(() {
-        errorMessage = "Please enter email and password.";
+        errorMessage = "Silahkan masukkan email dan password.";
       });
       return;
     }
 
     setState(() {
       _isLoading = true;
-      errorMessage = null; // Reset error message
+      errorMessage = null;
     });
 
     try {
@@ -36,23 +82,28 @@ class _LoginScreenState extends State<LoginScreen> {
         email: _emailController.text,
         password: _passwordController.text,
       );
+
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      prefs.setBool('isLoggedIn', true);
+
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const HomeScreen()), // Ganti dengan HomeScreen Anda
+        MaterialPageRoute(builder: (context) => const HomeScreen()),
       );
     } on FirebaseAuthException catch (e) {
-      print('Error code: ${e.code}'); // Log kode error untuk debugging
       setState(() {
         switch (e.code) {
-          case 'user-not-found':
           case 'wrong-password':
-            errorMessage = 'Email atau password salah.'; // Pesan untuk email/password salah
+            errorMessage = 'Email atau password salah.';
             break;
           case 'invalid-email':
             errorMessage = 'Alamat email tidak valid.';
             break;
           case 'user-disabled':
             errorMessage = 'Akun ini telah dinonaktifkan.';
+            break;
+          case 'user-not-found':
+            errorMessage = 'Akun tidak ditemukan.';
             break;
           default:
             errorMessage = 'Terjadi kesalahan. Silakan coba lagi.';
@@ -64,7 +115,7 @@ class _LoginScreenState extends State<LoginScreen> {
       });
     } finally {
       setState(() {
-        _isLoading = false; // Menghilangkan indikator muat
+        _isLoading = false;
       });
     }
   }
@@ -72,7 +123,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _resetPassword() async {
     if (_emailController.text.isEmpty) {
       setState(() {
-        errorMessage = "Please enter your email to reset password.";
+        errorMessage = "Silahkan masukkan email untuk reset password.";
       });
       return;
     }
@@ -80,11 +131,11 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       await _auth.sendPasswordResetEmail(email: _emailController.text);
       setState(() {
-        errorMessage = "Password reset email sent!";
+        errorMessage = "Email reset password terkirim!";
       });
     } on FirebaseAuthException catch (e) {
       setState(() {
-        errorMessage = e.message; // Tampilkan pesan error dari Firebase
+        errorMessage = e.message;
       });
     } catch (e) {
       setState(() {
@@ -114,7 +165,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 20),
                 Image.asset(
-                  'assets/images/logo2.png', // Path ikon hewan
+                  'assets/images/logo2.png',
                   height: 150,
                 ),
                 const SizedBox(height: 20),
