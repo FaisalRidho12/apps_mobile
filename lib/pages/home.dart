@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart'; // Import Firebase Auth
 import 'package:flutter_local_notifications/flutter_local_notifications.dart'; // Import umtuk notifications
 import 'package:audioplayers/audioplayers.dart'; // Import for alarm sound
+import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:workmanager/workmanager.dart';
 import 'add_schedule.dart'; // Import halaman Tambahkan Jadwal
@@ -33,7 +34,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _startAutoSlide(); // Memulai animasi otomatis 
     _loadSchedules();
     _checkSchedules();
-    Workmanager().initialize(callbackDispatcher, isInDebugMode: false);
+    // Workmanager().initialize(callbackDispatcher, isInDebugMode: false);
     _scheduleBackgroundAlarms();
   }
 
@@ -91,8 +92,8 @@ class _HomeScreenState extends State<HomeScreen> {
   void _scheduleBackgroundAlarms() {
     for (var schedule in schedules) {
       if (schedule['isOn'] == true) {
-        DateTime scheduleDateTime = _parseScheduleDateTime(schedule['time']);
-        // DateTime scheduleDateTime = DateTime.parse("${schedule['date']} ${schedule['time']}");
+        // DateTime scheduleDateTime = _parseScheduleDateTime(schedule['time']);
+        DateTime scheduleDateTime = DateTime.parse("${schedule['date']} ${schedule['time']}");
         Duration timeDifference = scheduleDateTime.difference(DateTime.now());
         if (timeDifference.isNegative) continue;
 
@@ -101,7 +102,7 @@ class _HomeScreenState extends State<HomeScreen> {
           "alarmTask",
           inputData: {
             "name": schedule['name'],
-            //"date" : schedule['date'],
+            "date" : schedule['date'],
             "time": schedule['time'],
           },
           initialDelay: timeDifference,
@@ -110,17 +111,17 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  DateTime _parseScheduleDateTime(String time) {
-    final date = DateTime.now();
-    final timeParts = time.split(':');
-    return DateTime(
-      date.year,
-      date.month,
-      date.day,
-      int.parse(timeParts[0]),
-      int.parse(timeParts[1]),
-    );
-  }
+  // DateTime _parseScheduleDateTime(String time) {
+  //   final date = DateTime.now();
+  //   final timeParts = time.split(':');
+  //   return DateTime(
+  //     date.year,
+  //     date.month,
+  //     date.day,
+  //     int.parse(timeParts[0]),
+  //     int.parse(timeParts[1]),
+  //   );
+  // }
 
   static void callbackDispatcher() {
     Workmanager().executeTask((task, inputData) async {
@@ -188,47 +189,45 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // Fungsi untuk mengecek apakah jadwal sudah mencapai waktunya
+  // void _checkSchedules() {
+  //   _timer = Timer.periodic(const Duration(minutes: 1), (Timer timer) {
+  //     final now = TimeOfDay.now();
+  //     for (var schedule in schedules) {
+  //       if (schedule['isOn'] == true) {
+  //         TimeOfDay scheduleTime = _parseTime(schedule['time']);
+  //         if (now.hour == scheduleTime.hour && now.minute == scheduleTime.minute) {
+  //           _showNotification(schedule['name']);
+  //           _playAlarm(); // Memanggil fungsi untuk memutar alarm
+  //         }
+  //       }
+  //     }
+  //   });
+  // }
+
   void _checkSchedules() {
-    _timer = Timer.periodic(const Duration(minutes: 1), (Timer timer) {
-      final now = TimeOfDay.now();
-      for (var schedule in schedules) {
-        if (schedule['isOn'] == true) {
-          TimeOfDay scheduleTime = _parseTime(schedule['time']);
-          if (now.hour == scheduleTime.hour && now.minute == scheduleTime.minute) {
-            _showNotification(schedule['name']);
-            _playAlarm(); // Memanggil fungsi untuk memutar alarm
-          }
+  _timer = Timer.periodic(const Duration(minutes: 1), (Timer timer) {
+    final now = DateTime.now();
+    for (var schedule in schedules) {
+      if (schedule['isOn'] == true) {
+        DateTime scheduleDateTime = DateTime.parse("${schedule['date']} ${schedule['time']}");
+        if (now.year == scheduleDateTime.year &&
+            now.month == scheduleDateTime.month &&
+            now.day == scheduleDateTime.day &&
+            now.hour == scheduleDateTime.hour &&
+            now.minute == scheduleDateTime.minute) {
+          _showNotification(schedule['name']);
+          _playAlarm();
         }
       }
-    });
-  }
-
-//   void _checkSchedules() {
-//   _timer = Timer.periodic(const Duration(minutes: 1), (Timer timer) {
-//     final now = DateTime.now();
-//     for (var schedule in schedules) {
-//       if (schedule['isOn'] == true) {
-//         DateTime scheduleDateTime = DateTime.parse("${schedule['date']} ${schedule['time']}");
-//         if (now.year == scheduleDateTime.year &&
-//             now.month == scheduleDateTime.month &&
-//             now.day == scheduleDateTime.day &&
-//             now.hour == scheduleDateTime.hour &&
-//             now.minute == scheduleDateTime.minute) {
-//           _showNotification(schedule['name']);
-//           _playAlarm();
-//         }
-//       }
-//     }
-//   });
-// }
+    }
+  });
+}
 
   // Parse waktu dari string ke TimeOfDay
   TimeOfDay _parseTime(String time) {
     final parts = time.split(':');
     return TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]));
   }
-
-
 
   String get username {
     final user = FirebaseAuth.instance.currentUser;
@@ -238,29 +237,38 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        actions: const [
-          Padding(
-            padding: EdgeInsets.only(right: 16.0),
-            child: CircleAvatar(
-              backgroundImage: AssetImage('assets/images/pp.png'),
-            ),
-          ),
-        ],
-      ),
+      // appBar: AppBar(
+      //   backgroundColor: Colors.transparent,
+      //   elevation: 0,
+      //   // actions: const [
+      //   //   Padding(
+      //   //     padding: EdgeInsets.only(right: 16.0),
+      //   //     child: CircleAvatar(
+      //   //       backgroundImage: AssetImage('assets/images/pp.png'),
+      //   //     ),
+      //   //   ),
+      //   // ],
+      // ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              "Hi, $username",
-              style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Colors.teal,
+            Container(
+              width: double.infinity, 
+              padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+              margin: const EdgeInsets.only(bottom: 16.0),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFEDDB), // Background color
+                borderRadius: BorderRadius.circular(12), // Rounded corners
+              ),
+              child: Text(
+                "Hi, $username",
+                style: GoogleFonts.poppins(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFF594545),
+                ),
               ),
             ),
             const SizedBox(height: 16),
@@ -321,7 +329,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               child: ListTile(
                 title: const Text('Tambahkan Jadwal'),
-                trailing: const Icon(Icons.add, color: Colors.teal),
+                trailing: const Icon(Icons.add, color: Color(0xFF594545)),
                 onTap: () async {
                   final result = await Navigator.push(
                     context,
@@ -345,12 +353,12 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            const Text(
+            Text(
               "Jadwal Terbaru",
-              style: TextStyle(
+              style: GoogleFonts.poppins(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: Colors.teal,
+                color: const Color(0xFF594545),
               ),
             ),
             const SizedBox(height: 8),
@@ -443,7 +451,7 @@ class _HomeScreenState extends State<HomeScreen> {
             label: 'Profile',
           ),
         ],
-        selectedItemColor: Colors.teal,
+        selectedItemColor: const Color(0xFF594545),
         unselectedItemColor: Colors.grey,
         showUnselectedLabels: true,
       ),
