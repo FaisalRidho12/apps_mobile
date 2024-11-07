@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart'; // Import Firebase Auth
+import 'package:cloud_firestore/cloud_firestore.dart'; // Import Firestore
 import 'package:flutter_local_notifications/flutter_local_notifications.dart'; // Import umtuk notifications
 import 'package:audioplayers/audioplayers.dart'; // Import for alarm sound
 import 'package:google_fonts/google_fonts.dart';
@@ -26,6 +27,7 @@ class _HomeScreenState extends State<HomeScreen> {
   FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
   AudioPlayer audioPlayer = AudioPlayer();
   bool isAlarmPlaying = false; // Menambahkan status alarm
+  String username = 'User';
 
   @override
   void initState() {
@@ -34,8 +36,21 @@ class _HomeScreenState extends State<HomeScreen> {
     _startAutoSlide(); // Memulai animasi otomatis 
     _loadSchedules();
     _checkSchedules();
-    // Workmanager().initialize(callbackDispatcher, isInDebugMode: false);
+    _fetchUsername();
+    Workmanager().initialize(callbackDispatcher, isInDebugMode: false);
     _scheduleBackgroundAlarms();
+  }
+
+  // Fungsi untuk mengambil username dari Firestore
+  Future<void> _fetchUsername() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      final uid = user.uid;
+      final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      setState(() {
+        username = userDoc['username'] ?? 'User';
+      });
+    }
   }
 
   @override
@@ -111,18 +126,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  // DateTime _parseScheduleDateTime(String time) {
-  //   final date = DateTime.now();
-  //   final timeParts = time.split(':');
-  //   return DateTime(
-  //     date.year,
-  //     date.month,
-  //     date.day,
-  //     int.parse(timeParts[0]),
-  //     int.parse(timeParts[1]),
-  //   );
-  // }
-
   static void callbackDispatcher() {
     Workmanager().executeTask((task, inputData) async {
       final flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
@@ -189,21 +192,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // Fungsi untuk mengecek apakah jadwal sudah mencapai waktunya
-  // void _checkSchedules() {
-  //   _timer = Timer.periodic(const Duration(minutes: 1), (Timer timer) {
-  //     final now = TimeOfDay.now();
-  //     for (var schedule in schedules) {
-  //       if (schedule['isOn'] == true) {
-  //         TimeOfDay scheduleTime = _parseTime(schedule['time']);
-  //         if (now.hour == scheduleTime.hour && now.minute == scheduleTime.minute) {
-  //           _showNotification(schedule['name']);
-  //           _playAlarm(); // Memanggil fungsi untuk memutar alarm
-  //         }
-  //       }
-  //     }
-  //   });
-  // }
-
   void _checkSchedules() {
   _timer = Timer.periodic(const Duration(minutes: 1), (Timer timer) {
     final now = DateTime.now();
@@ -229,10 +217,10 @@ class _HomeScreenState extends State<HomeScreen> {
     return TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]));
   }
 
-  String get username {
-    final user = FirebaseAuth.instance.currentUser;
-    return user != null ? user.email?.split('@')[0] ?? "User" : "User";
-  }
+  // String get username {
+  //   final user = FirebaseAuth.instance.currentUser;
+  //   return user != null ? user.email?.split('@')[0] ?? "User" : "User";
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -251,16 +239,17 @@ class _HomeScreenState extends State<HomeScreen> {
       // ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: double.infinity, 
-              padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-              margin: const EdgeInsets.only(bottom: 16.0),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFFEDDB), // Background color
-                borderRadius: BorderRadius.circular(12), // Rounded corners
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 70), // Tambahkan ruang di atas
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+                margin: const EdgeInsets.only(bottom: 16.0),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFEDDB),
+                  borderRadius: BorderRadius.circular(10),
               ),
               child: Text(
                 "Hi, $username",
