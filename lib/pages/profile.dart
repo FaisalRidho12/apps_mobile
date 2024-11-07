@@ -21,9 +21,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void initState() {
     super.initState();
-    user = FirebaseAuth.instance.currentUser; // Ambil data pengguna yang sedang login
+    user = FirebaseAuth.instance.currentUser; 
     if (user != null) {
-      _fetchUsername(); // Ambil data nama pengguna dari Firestore
+      _fetchUsername(); 
     }
   }
 
@@ -80,10 +80,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               );
             }),
             _buildMenuItem(context, Icons.notifications, 'Notifikasi', () {
-              // Logika untuk navigasi ke halaman Notifikasi
+              
             }),
             _buildMenuItem(context, Icons.info_outline, 'Tentang Kami', () {
-              // Logika untuk navigasi ke halaman Tentang Kami
+              
             }),
           ],
         ),
@@ -350,8 +350,118 @@ class SettingsScreen extends StatelessWidget {
   }
 }
 
-class ChangePasswordWidget extends StatelessWidget {
+class ChangePasswordWidget extends StatefulWidget {
   const ChangePasswordWidget({super.key});
+
+  @override
+  _ChangePasswordWidgetState createState() => _ChangePasswordWidgetState();
+}
+
+class _ChangePasswordWidgetState extends State<ChangePasswordWidget> {
+  final TextEditingController _oldPasswordController = TextEditingController();
+  final TextEditingController _newPasswordController = TextEditingController();
+  final TextEditingController _confirmPasswordController = TextEditingController();
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+
+  bool _isLoading = false;
+  bool _oldPasswordVisible = false;
+  bool _newPasswordVisible = false;
+  bool _confirmPasswordVisible = false;
+
+  Future<void> _changePassword() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      User? user = _auth.currentUser;
+      String email = user?.email ?? '';
+
+      // Re-authenticate user
+      AuthCredential credential = EmailAuthProvider.credential(
+        email: email,
+        password: _oldPasswordController.text,
+      );
+
+      await user?.reauthenticateWithCredential(credential);
+
+      if (_newPasswordController.text == _confirmPasswordController.text) {
+        await user?.updatePassword(_newPasswordController.text);
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text(
+              'Sukses',
+              style: GoogleFonts.poppins(),
+            ),
+            content: Text(
+              'Password telah diubah.',
+              style: GoogleFonts.poppins(),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text(
+                  'OK',
+                  style: GoogleFonts.poppins(),
+                ),
+              ),
+            ],
+          ),
+        );
+      } else {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text(
+              'Error',
+              style: GoogleFonts.poppins(),
+            ),
+            content: Text(
+              'Password baru dan konfirmasi password tidak cocok.',
+              style: GoogleFonts.poppins(),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text(
+                  'OK',
+                  style: GoogleFonts.poppins(),
+                ),
+              ),
+            ],
+          ),
+        );
+      }
+    } catch (e) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(
+            'Error',
+            style: GoogleFonts.poppins(),
+          ),
+          content: Text(
+            'Password lama salah atau terjadi kesalahan: $e',
+            style: GoogleFonts.poppins(),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(
+                'OK',
+                style: GoogleFonts.poppins(),
+              ),
+            ),
+          ],
+        ),
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -374,31 +484,90 @@ class ChangePasswordWidget extends StatelessWidget {
         child: Column(
           children: [
             Text(
+              'Masukkan password lama Anda:',
+              style: GoogleFonts.poppins(fontSize: 16, color: const Color(0xFF594545)),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _oldPasswordController,
+              obscureText: !_oldPasswordVisible,
+              decoration: InputDecoration(
+                border: const OutlineInputBorder(),
+                labelText: 'Password Lama',
+                labelStyle: GoogleFonts.poppins(),
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    _oldPasswordVisible ? Icons.visibility_off : Icons.visibility,
+                    color: const Color(0xFF594545),
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _oldPasswordVisible = !_oldPasswordVisible;
+                    });
+                  },
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
               'Masukkan password baru Anda:',
               style: GoogleFonts.poppins(fontSize: 16, color: const Color(0xFF594545)),
             ),
             const SizedBox(height: 16),
             TextField(
-              obscureText: true,
+              controller: _newPasswordController,
+              obscureText: !_newPasswordVisible,
               decoration: InputDecoration(
                 border: const OutlineInputBorder(),
                 labelText: 'Password Baru',
                 labelStyle: GoogleFonts.poppins(),
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    _newPasswordVisible ? Icons.visibility_off : Icons.visibility,
+                    color: const Color(0xFF594545),
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _newPasswordVisible = !_newPasswordVisible;
+                    });
+                  },
+                ),
               ),
             ),
             const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () {
-                // Logika ganti password di sini
-              },
-              child: Text(
-                'Simpan',
-                style: GoogleFonts.poppins(),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF594545),
+            TextField(
+              controller: _confirmPasswordController,
+              obscureText: !_confirmPasswordVisible,
+              decoration: InputDecoration(
+                border: const OutlineInputBorder(),
+                labelText: 'Ulangi Password Baru',
+                labelStyle: GoogleFonts.poppins(),
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    _confirmPasswordVisible ? Icons.visibility_off : Icons.visibility,
+                    color: const Color(0xFF594545),
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _confirmPasswordVisible = !_confirmPasswordVisible;
+                    });
+                  },
+                ),
               ),
             ),
+            const SizedBox(height: 16),
+            _isLoading
+                ? const CircularProgressIndicator()
+                : ElevatedButton(
+                    onPressed: _changePassword,
+                    child: Text(
+                      'Simpan',
+                      style: GoogleFonts.poppins(color: Colors.white),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF594545),
+                    ),
+                  ),
           ],
         ),
       ),
