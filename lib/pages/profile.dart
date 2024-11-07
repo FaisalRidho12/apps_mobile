@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'home.dart';
 import 'iot.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -26,7 +27,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  // Fungsi untuk mengambil nama pengguna dari Firestore
   Future<void> _fetchUsername() async {
     try {
       DocumentSnapshot snapshot = await FirebaseFirestore.instance
@@ -49,9 +49,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Profile',
-          style: TextStyle(color: Color(0xFF594545), fontSize: 24),
+          style: GoogleFonts.poppins(color: const Color(0xFF594545), fontSize: 24),
         ),
         centerTitle: true,
       ),
@@ -65,12 +65,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              displayName, // Menampilkan nama pengguna
-              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF594545)),
+              displayName,
+              style: GoogleFonts.poppins(fontSize: 22, fontWeight: FontWeight.bold, color: const Color(0xFF594545)),
             ),
             Text(
-              user?.email ?? 'username@gmail.com', // Menampilkan email pengguna
-              style: const TextStyle(fontSize: 16, color: Colors.grey),
+              user?.email ?? 'username@gmail.com',
+              style: GoogleFonts.poppins(fontSize: 16, color: Colors.grey),
             ),
             const SizedBox(height: 32),
             _buildMenuItem(context, Icons.settings, 'Pengaturan', () {
@@ -115,7 +115,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             const SizedBox(width: 16),
             Text(
               title,
-              style: const TextStyle(fontSize: 18, color: Color(0xFF594545)),
+              style: GoogleFonts.poppins(fontSize: 18, color: const Color(0xFF594545)),
             ),
             const Spacer(),
           ],
@@ -180,9 +180,9 @@ class SettingsScreen extends StatelessWidget {
           icon: const Icon(Icons.arrow_back, color: Color(0xFF594545)),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text(
+        title: Text(
           'Akun',
-          style: TextStyle(color: Color(0xFF594545), fontSize: 24),
+          style: GoogleFonts.poppins(color: const Color(0xFF594545), fontSize: 24),
         ),
         centerTitle: true,
       ),
@@ -195,13 +195,13 @@ class SettingsScreen extends StatelessWidget {
               backgroundImage: AssetImage('assets/images/pp.png'),
             ),
             const SizedBox(height: 16),
-            const Text(
+            Text(
               'Username',
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF594545)),
+              style: GoogleFonts.poppins(fontSize: 22, fontWeight: FontWeight.bold, color: const Color(0xFF594545)),
             ),
-            const Text(
+            Text(
               'username@gmail.com',
-              style: TextStyle(fontSize: 16, color: Colors.grey),
+              style: GoogleFonts.poppins(fontSize: 16, color: Colors.grey),
             ),
             const SizedBox(height: 32),
             _buildAccountMenuItem(Icons.person_add, 'Tambahkan Akun', () {}),
@@ -242,11 +242,11 @@ class SettingsScreen extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Icon(icon, color: Color(0xFF594545)),
+            Icon(icon, color: const Color(0xFF594545)),
             const SizedBox(width: 16),
             Text(
               title,
-              style: const TextStyle(fontSize: 18, color: Color(0xFF594545)),
+              style: GoogleFonts.poppins(fontSize: 18, color: const Color(0xFF594545)),
             ),
             const Spacer(),
             const Icon(Icons.arrow_forward_ios, color: Color(0xFF594545)),
@@ -261,12 +261,21 @@ class SettingsScreen extends StatelessWidget {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Hapus Akun'),
-          content: const Text('Apakah Anda yakin ingin menghapus akun ini?'),
+          title: Text(
+            'Hapus Akun',
+            style: GoogleFonts.poppins(),
+          ),
+          content: Text(
+            'Apakah Anda yakin ingin menghapus akun ini?',
+            style: GoogleFonts.poppins(),
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Batal'),
+              child: Text(
+                'Batal',
+                style: GoogleFonts.poppins(),
+              ),
             ),
             TextButton(
               onPressed: () async {
@@ -276,25 +285,22 @@ class SettingsScreen extends StatelessWidget {
 
                 if (user != null) {
                   try {
-                    // Hapus data pengguna dari Firestore
                     await FirebaseFirestore.instance
-                        .collection('users') // Sesuaikan dengan koleksi di Firestore
+                        .collection('users')
                         .doc(user.uid)
                         .delete();
 
-                    // Hapus akun pengguna dari Firebase Authentication
                     await user.delete();
-
-                    // Sign out pengguna dari aplikasi
                     await FirebaseAuth.instance.signOut();
-
-                    // Arahkan ke layar login setelah akun berhasil dihapus
                   } catch (e) {
                     print("Error menghapus akun: $e");
                   }
                 }
               },
-              child: const Text('Hapus'),
+              child: Text(
+                'Hapus',
+                style: GoogleFonts.poppins(),
+              ),
             ),
           ],
         );
@@ -307,23 +313,35 @@ class SettingsScreen extends StatelessWidget {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Logout'),
-          content: const Text('Apakah Anda yakin ingin keluar?'),
+          title: Text(
+            'Logout',
+            style: GoogleFonts.poppins(),
+          ),
+          content: Text(
+            'Apakah Anda yakin ingin logout?',
+            style: GoogleFonts.poppins(),
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Batal'),
+              child: Text(
+                'Batal',
+                style: GoogleFonts.poppins(),
+              ),
             ),
             TextButton(
               onPressed: () {
-                FirebaseAuth.instance.signOut();
-                Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(builder: (context) => const LoginScreen()),
-                  (Route<dynamic> route) => false,
-                );
+                FirebaseAuth.instance.signOut().then((value) {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => const LoginScreen()),
+                  );
+                });
               },
-              child: const Text('Logout'),
+              child: Text(
+                'Logout',
+                style: GoogleFonts.poppins(),
+              ),
             ),
           ],
         );
@@ -339,12 +357,50 @@ class ChangePasswordWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Ganti Password'),
+        title: Text(
+          'Ganti Password',
+          style: GoogleFonts.poppins(color: const Color(0xFF594545), fontSize: 24),
+        ),
+        centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Color(0xFF594545)),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
       ),
-      body: Center(
-        child: const Text('Halaman Ganti Password'),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            Text(
+              'Masukkan password baru Anda:',
+              style: GoogleFonts.poppins(fontSize: 16, color: const Color(0xFF594545)),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              obscureText: true,
+              decoration: InputDecoration(
+                border: const OutlineInputBorder(),
+                labelText: 'Password Baru',
+                labelStyle: GoogleFonts.poppins(),
+              ),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () {
+                // Logika ganti password di sini
+              },
+              child: Text(
+                'Simpan',
+                style: GoogleFonts.poppins(),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF594545),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
