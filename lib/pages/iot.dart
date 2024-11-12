@@ -1,31 +1,46 @@
 import 'package:flutter/material.dart';
 import 'home.dart';
-import 'profile.dart'; // Import profile.dart
-import 'package:http/http.dart' as http;
+import 'profile.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'mqtt_service.dart'; // Import mqtt_service.dart
+import 'iot_p-m.dart';
+import 'iot_p-o.dart';
 
-class IoTContent extends StatefulWidget {
-  const IoTContent({super.key});
+class IoTScreen extends StatefulWidget {
+  const IoTScreen({super.key});
 
   @override
-  _IoTContentState createState() => _IoTContentState();
+  _IoTScreenState createState() => _IoTScreenState();
 }
 
-class _IoTContentState extends State<IoTContent> {
-  final String _baseUrl = 'http://192.168.1.26'; // Replace with ESP8266 IP
+class _IoTScreenState extends State<IoTScreen> {
   int _currentIndex = 1; // Index for IoT in BottomNavigationBar
+  late MqttService mqttService;
+  String temperature = ""; // Variable to hold temperature
+  String humidity = ""; // Variable to hold humidity
 
-  Future<void> _moveServo(int position) async {
-    try {
-      final response = await http.get(Uri.parse('$_baseUrl/servo/$position'));
-      if (response.statusCode == 200) {
-        print('Servo moved to $position degrees!');
-      } else {
-        print('Failed to move servo. Status code: ${response.statusCode}');
-      }
-    } catch (e) {
-      print('Error: $e');
-    }
+  @override
+  void initState() {
+    super.initState();
+    mqttService = MqttService();
+
+    // Set callback for connection status changes
+    mqttService.onConnectionChanged = (isConnected) {
+      setState(() {
+        // Update UI or perform actions based on connection status
+      });
+    };
+
+    // Set callback for receiving DHT data
+    mqttService.onDhtDataReceived = (temp, hum) {
+      setState(() {
+        temperature = temp; // Update temperature
+        humidity = hum; // Update humidity
+      });
+    };
+
+    // Connect to MQTT broker
+    mqttService.connect();
   }
 
   void _showFeedDialog() {
@@ -33,32 +48,103 @@ class _IoTContentState extends State<IoTContent> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Pilih Posisi Servo'),
+          shape: RoundedRectangleBorder(
+            borderRadius:
+                BorderRadius.circular(15), // Rounded corners for the dialog
+          ),
+          title: Text(
+            'Pakan',
+            style: GoogleFonts.poppins(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: const Color(0xFF594545), // Title color
+            ),
+          ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               ElevatedButton(
                 onPressed: () {
-                  _moveServo(0);
-                  Navigator.of(context).pop();
+                  Navigator.of(context).pop(); // Close dialog
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          ServoManualControlPage(mqttService: mqttService),
+                    ), // Open manual control page
+                  );
                 },
-                child: const Text('TUTUP'),
+                style: ElevatedButton.styleFrom(
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 15, horizontal: 40),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  backgroundColor: const Color(0xFFFFF8EA), // Background color
+                  foregroundColor: const Color(0xFF594545), // Text color
+                  elevation: 5,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.touch_app, // You can use an icon here
+                      color: const Color(0xFF594545),
+                      size: 24,
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      'Manual',
+                      style: GoogleFonts.poppins(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w500,
+                        color: const Color(0xFF594545),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 20), // Space between buttons
               ElevatedButton(
                 onPressed: () {
-                  _moveServo(90);
-                  Navigator.of(context).pop();
+                  Navigator.of(context).pop(); // Close dialog
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          ServoAutomaticControlPage(mqttService: mqttService),
+                    ), // Open automatic control page
+                  );
                 },
-                child: const Text('90°'),
-              ),
-              const SizedBox(height: 10),
-              ElevatedButton(
-                onPressed: () {
-                  _moveServo(180);
-                  Navigator.of(context).pop();
-                },
-                child: const Text('BUKA'),
+                style: ElevatedButton.styleFrom(
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 15, horizontal: 40),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  backgroundColor: const Color(0xFFFFF8EA), // Background color
+                  foregroundColor: const Color(0xFF594545), // Text color
+                  elevation: 5,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.timer, // Icon for automatic control
+                      color: const Color(0xFF594545),
+                      size: 24,
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      'Otomatis',
+                      style: GoogleFonts.poppins(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w500,
+                        color: const Color(0xFF594545),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
@@ -73,7 +159,24 @@ class _IoTContentState extends State<IoTContent> {
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Monitoring'),
-          content: const Text('Monitoring information goes here.'),
+          content: StreamBuilder(
+            stream: mqttService.dhtStream, // Stream untuk suhu dan kelembapan
+            builder: (context, snapshot) {
+              if (snapshot.hasData) {
+                // Asumsikan snapshot.data adalah Map dengan key 'temperature' dan 'humidity'
+                var data = snapshot.data as Map<String, String>;
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text('Suhu: ${data['temperature']} °C'),
+                    Text('Kelembapan: ${data['humidity']} %'),
+                  ],
+                );
+              } else {
+                return const CircularProgressIndicator(); // Loading jika data belum tersedia
+              }
+            },
+          ),
           actions: [
             TextButton(
               onPressed: () {
@@ -96,19 +199,27 @@ class _IoTContentState extends State<IoTContent> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Container(
-              width: double.infinity, // Make the container full width
-              color:
-                  const Color(0xFFFFF8EA), // Set the background color to brown
-              padding: const EdgeInsets.all(8.0), // Add some padding
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFF8EA),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.5), // Shadow color
+                    spreadRadius: 2, // Spread radius
+                    blurRadius: 5, // Blur radius
+                    offset: const Offset(0, 3), // Offset for the shadow
+                  ),
+                ],
+              ),
+              padding: const EdgeInsets.fromLTRB(
+                  8.0, 30.0, 8.0, 8.0), // Increased top padding
               child: Center(
-                // Center the text horizontally
                 child: Text(
                   'Kontrol IoT',
                   style: GoogleFonts.poppins(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    color: Color(
-                        0xFF594545), // Change text color to white for contrast
+                    color: Color(0xFF594545),
                   ),
                 ),
               ),
@@ -116,21 +227,19 @@ class _IoTContentState extends State<IoTContent> {
             const SizedBox(height: 20),
             Container(
               decoration: BoxDecoration(
-                color: const Color(0xFFFFF8EA), // Warna background coklat muda
+                color: const Color(0xFFFFF8EA),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.grey.withOpacity(0.5),
                     spreadRadius: 5,
                     blurRadius: 7,
-                    offset: const Offset(0, 3), // perubahan posisi bayangan
+                    offset: const Offset(0, 3),
                   ),
                 ],
-                borderRadius: BorderRadius.circular(
-                    12), // Opsional, untuk membuat sudut lebih halus
+                borderRadius: BorderRadius.circular(12),
               ),
               child: Padding(
-                padding: const EdgeInsets.all(
-                    8.0), // Memberikan sedikit padding di sekitar gambar
+                padding: const EdgeInsets.all(8.0),
                 child: Image.asset(
                   'assets/images/image-iot1.png',
                   height: 200,
@@ -171,6 +280,7 @@ class _IoTContentState extends State<IoTContent> {
                           style: GoogleFonts.poppins(
                             color: Color(0xFF594545),
                             fontSize: 18,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
                       ],
@@ -206,6 +316,7 @@ class _IoTContentState extends State<IoTContent> {
                           style: GoogleFonts.poppins(
                             color: Color(0xFF594545),
                             fontSize: 18,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
                       ],
@@ -256,9 +367,15 @@ class _IoTContentState extends State<IoTContent> {
           label: 'Profile',
         ),
       ],
-      selectedItemColor: Colors.teal,
+      selectedItemColor: const Color(0xFF594545),
       unselectedItemColor: Colors.grey,
       showUnselectedLabels: true,
     );
+  }
+
+  @override
+  void dispose() {
+    mqttService.disconnect(); // Disconnect MQTT when screen is disposed
+    super.dispose();
   }
 }
