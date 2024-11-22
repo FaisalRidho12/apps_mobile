@@ -8,16 +8,13 @@ import 'package:google_fonts/google_fonts.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
-
   @override
   _ProfileScreenState createState() => _ProfileScreenState();
 }
-
 class _ProfileScreenState extends State<ProfileScreen> {
   int _currentIndex = 2;
   User? user;
   String displayName = 'Username';
-
   @override
   void initState() {
     super.initState();
@@ -26,7 +23,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       _fetchUsername(); 
     }
   }
-
   Future<void> _fetchUsername() async {
     try {
       DocumentSnapshot snapshot = await FirebaseFirestore.instance
@@ -44,7 +40,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       print('Error fetching username: $e');
     }
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -91,7 +86,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       bottomNavigationBar: _buildBottomNavigationBar(),
     );
   }
-
   Widget _buildMenuItem(BuildContext context, IconData icon, String title, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
@@ -123,7 +117,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
     );
   }
-
   Widget _buildBottomNavigationBar() {
     return BottomNavigationBar(
       currentIndex: _currentIndex,
@@ -165,7 +158,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 }
-
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
@@ -222,7 +214,6 @@ class SettingsScreen extends StatelessWidget {
       ),
     );
   }
-
   Widget _buildAccountMenuItem(IconData icon, String title, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
@@ -255,7 +246,6 @@ class SettingsScreen extends StatelessWidget {
       ),
     );
   }
-
   void _showDeleteAccountDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -280,16 +270,13 @@ class SettingsScreen extends StatelessWidget {
             TextButton(
               onPressed: () async {
                 Navigator.of(context).pop();
-
                 final user = FirebaseAuth.instance.currentUser;
-
                 if (user != null) {
                   try {
                     await FirebaseFirestore.instance
                         .collection('users')
                         .doc(user.uid)
                         .delete();
-
                     await user.delete();
                     await FirebaseAuth.instance.signOut();
                   } catch (e) {
@@ -307,7 +294,6 @@ class SettingsScreen extends StatelessWidget {
       },
     );
   }
-
   void _showLogoutConfirmationDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -362,7 +348,6 @@ class _ChangePasswordWidgetState extends State<ChangePasswordWidget> {
   final TextEditingController _newPasswordController = TextEditingController();
   final TextEditingController _confirmPasswordController = TextEditingController();
   final FirebaseAuth _auth = FirebaseAuth.instance;
-
   bool _isLoading = false;
   bool _oldPasswordVisible = false;
   bool _newPasswordVisible = false;
@@ -372,7 +357,6 @@ class _ChangePasswordWidgetState extends State<ChangePasswordWidget> {
     setState(() {
       _isLoading = true;
     });
-
     try {
       User? user = _auth.currentUser;
       String email = user?.email ?? '';
@@ -478,97 +462,131 @@ class _ChangePasswordWidgetState extends State<ChangePasswordWidget> {
           icon: const Icon(Icons.arrow_back, color: Color(0xFF594545)),
           onPressed: () => Navigator.of(context).pop(),
         ),
+        toolbarHeight: 70, // Mengurangi tinggi toolbar untuk mendekatkan judul ke konten
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            Text(
-              'Masukkan password lama Anda:',
-              style: GoogleFonts.poppins(fontSize: 16, color: const Color(0xFF594545)),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _oldPasswordController,
-              obscureText: !_oldPasswordVisible,
-              decoration: InputDecoration(
-                border: const OutlineInputBorder(),
-                labelText: 'Password Lama',
-                labelStyle: GoogleFonts.poppins(),
-                suffixIcon: IconButton(
-                  icon: Icon(
-                    _oldPasswordVisible ? Icons.visibility_off : Icons.visibility,
-                    color: const Color(0xFF594545),
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      _oldPasswordVisible = !_oldPasswordVisible;
-                    });
-                  },
-                ),
+      body: Center(
+        child: Container(
+          width: MediaQuery.of(context).size.width * 0.9,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
               ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Masukkan password baru Anda:',
-              style: GoogleFonts.poppins(fontSize: 16, color: const Color(0xFF594545)),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _newPasswordController,
-              obscureText: !_newPasswordVisible,
-              decoration: InputDecoration(
-                border: const OutlineInputBorder(),
-                labelText: 'Password Baru',
-                labelStyle: GoogleFonts.poppins(),
-                suffixIcon: IconButton(
-                  icon: Icon(
-                    _newPasswordVisible ? Icons.visibility_off : Icons.visibility,
-                    color: const Color(0xFF594545),
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      _newPasswordVisible = !_newPasswordVisible;
-                    });
-                  },
-                ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 16), // Menambah jarak untuk menyesuaikan posisi
+              Text(
+                'Password',
+                style: GoogleFonts.poppins(fontSize: 18, color: const Color(0xFF594545)),
               ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _confirmPasswordController,
-              obscureText: !_confirmPasswordVisible,
-              decoration: InputDecoration(
-                border: const OutlineInputBorder(),
-                labelText: 'Ulangi Password Baru',
-                labelStyle: GoogleFonts.poppins(),
-                suffixIcon: IconButton(
-                  icon: Icon(
-                    _confirmPasswordVisible ? Icons.visibility_off : Icons.visibility,
-                    color: const Color(0xFF594545),
+              const SizedBox(height: 8),
+              TextField(
+                controller: _oldPasswordController,
+                obscureText: !_oldPasswordVisible,
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: const Color(0xFFD3D3D3),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
                   ),
-                  onPressed: () {
-                    setState(() {
-                      _confirmPasswordVisible = !_confirmPasswordVisible;
-                    });
-                  },
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            _isLoading
-                ? const CircularProgressIndicator()
-                : ElevatedButton(
-                    onPressed: _changePassword,
-                    child: Text(
-                      'Simpan',
-                      style: GoogleFonts.poppins(color: Colors.white),
+                  hintText: 'Password lama',
+                  hintStyle: GoogleFonts.poppins(),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _oldPasswordVisible ? Icons.visibility_off : Icons.visibility,
+                      color: const Color(0xFF594545),
                     ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF594545),
-                    ),
+                    onPressed: () {
+                      setState(() {
+                        _oldPasswordVisible = !_oldPasswordVisible;
+                      });
+                    },
                   ),
-          ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _newPasswordController,
+                obscureText: !_newPasswordVisible,
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: const Color(0xFFD3D3D3),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  hintText: 'Password baru',
+                  hintStyle: GoogleFonts.poppins(),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _newPasswordVisible ? Icons.visibility_off : Icons.visibility,
+                      color: const Color(0xFF594545),
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _newPasswordVisible = !_newPasswordVisible;
+                      });
+                    },
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _confirmPasswordController,
+                obscureText: !_confirmPasswordVisible,
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: const Color(0xFFD3D3D3),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  hintText: 'Ulangi password baru',
+                  hintStyle: GoogleFonts.poppins(),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _confirmPasswordVisible ? Icons.visibility_off : Icons.visibility,
+                      color: const Color(0xFF594545),
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _confirmPasswordVisible = !_confirmPasswordVisible;
+                      });
+                    },
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              Center(
+                child: _isLoading
+                    ? const CircularProgressIndicator()
+                    : ElevatedButton(
+                        onPressed: _changePassword,
+                        child: Text(
+                          'Ganti',
+                          style: GoogleFonts.poppins(color: Colors.white),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF594545),
+                          padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+              ),
+            ],
+          ),
         ),
       ),
     );
