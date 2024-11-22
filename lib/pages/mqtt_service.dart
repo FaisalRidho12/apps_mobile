@@ -7,14 +7,19 @@ class MqttService {
   Function(bool)?
       onConnectionChanged; // Callback to notify connection state changes
   Function(String, String)? onDhtDataReceived; // Callback for DHT data
+  Function(String)? onFoodStockReceived; // Callback for food stock data
   final _dhtStreamController = StreamController<
       Map<String, String>>.broadcast(); // StreamController for DHT data
+  final _foodStockStreamController = StreamController<
+      String>.broadcast(); // StreamController for food stock data
 
   Stream<Map<String, String>> get dhtStream =>
       _dhtStreamController.stream; // Stream for DHT data
+  Stream<String> get foodStockStream =>
+      _foodStockStreamController.stream; // Stream for food stock data
 
   MqttService() {
-    client = MqttServerClient('10.10.181.12', 'FlutterClient');
+    client = MqttServerClient('178.128.89.8', 'FlutterClient');
     client.port = 1883;
     client.logging(on: true);
     client.keepAlivePeriod = 20; // Set keepAlive period
@@ -53,6 +58,8 @@ class MqttService {
   void subscribeTopics() {
     subscribe("catcare/dht"); // Subscribe to DHT topic
     subscribe("catcare/servo"); // Subscribe to servo topic
+    subscribe(
+        "catcare/foodstock"); // Subscribe to food stock topic (HC-SR04 sensor)
   }
 
   void _notifyConnectionStatus(bool isConnected) {
@@ -106,6 +113,15 @@ class MqttService {
 
       // Send data to the stream for real-time updates
       _dhtStreamController.add({'temperature': temp, 'humidity': hum});
+    } else if (topic == "catcare/foodstock") {
+      // Handle food stock level (e.g., from HC-SR04)
+      String stockLevel = payload; // Assuming payload is a percentage value
+      // Notify the Flutter app about the new food stock data
+      if (onFoodStockReceived != null) {
+        onFoodStockReceived!(stockLevel);
+      }
+      // Send data to the stream for real-time updates
+      _foodStockStreamController.add(stockLevel);
     } else if (topic == "catcare/servo") {
       // existing servo control logic...
     }
@@ -125,5 +141,7 @@ class MqttService {
   void disconnect() {
     client.disconnect();
     _dhtStreamController.close(); // Close the stream controller
+    _foodStockStreamController
+        .close(); // Close the food stock stream controller
   }
 }
