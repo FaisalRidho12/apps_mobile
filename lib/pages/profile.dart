@@ -196,7 +196,7 @@ class SettingsScreen extends StatelessWidget {
               style: GoogleFonts.poppins(fontSize: 16, color: Colors.grey),
             ),
             const SizedBox(height: 32),
-            _buildAccountMenuItem(Icons.person_add, 'Tambahkan Akun', () {}),
+            // _buildAccountMenuItem(Icons.person_add, 'Tambahkan Akun', () {}),
             _buildAccountMenuItem(Icons.delete, 'Hapus Akun', () {
               _showDeleteAccountDialog(context);
             }),
@@ -246,54 +246,80 @@ class SettingsScreen extends StatelessWidget {
       ),
     );
   }
-  void _showDeleteAccountDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(
-            'Hapus Akun',
-            style: GoogleFonts.poppins(),
+void _showDeleteAccountDialog(BuildContext context) {
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        backgroundColor: const Color(0xFFF8EDEB), // Sesuaikan dengan tema luar
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20), // Membuat sudut dialog melengkung
+        ),
+        title: Text(
+          'Hapus Akun',
+          style: GoogleFonts.poppins(
+            color: const Color(0xFF594545), // Warna sesuai dengan tema
+            fontWeight: FontWeight.bold,
           ),
-          content: Text(
-            'Apakah Anda yakin ingin menghapus akun ini?',
-            style: GoogleFonts.poppins(),
+        ),
+        content: Text(
+          'Apakah Anda yakin ingin menghapus akun ini?',
+          style: GoogleFonts.poppins(
+            color: const Color(0xFF594545), // Warna sesuai dengan tema
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(
-                'Batal',
-                style: GoogleFonts.poppins(),
+        ),
+        actions: [
+          TextButton(
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.white,
+              backgroundColor: const Color(0xFFB5838D), // Warna tombol "Batal"
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
               ),
             ),
-            TextButton(
-              onPressed: () async {
-                Navigator.of(context).pop();
-                final user = FirebaseAuth.instance.currentUser;
-                if (user != null) {
-                  try {
-                    await FirebaseFirestore.instance
-                        .collection('users')
-                        .doc(user.uid)
-                        .delete();
-                    await user.delete();
-                    await FirebaseAuth.instance.signOut();
-                  } catch (e) {
-                    print("Error menghapus akun: $e");
-                  }
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(
+              'Batal',
+              style: GoogleFonts.poppins(),
+            ),
+          ),
+          TextButton(
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.white,
+              backgroundColor: const Color(0xFF6D6875), // Warna tombol "Hapus"
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            onPressed: () async {
+              Navigator.of(context).pop();
+              final user = FirebaseAuth.instance.currentUser;
+              if (user != null) {
+                try {
+                  await FirebaseFirestore.instance
+                      .collection('users')
+                      .doc(user.uid)
+                      .delete();
+                  await user.delete();
+                  await FirebaseAuth.instance.signOut();
+                } catch (e) {
+                  print("Error menghapus akun: $e");
                 }
-              },
-              child: Text(
-                'Hapus',
-                style: GoogleFonts.poppins(),
-              ),
+              }
+            },
+            child: Text(
+              'Hapus',
+              style: GoogleFonts.poppins(),
             ),
-          ],
-        );
-      },
-    );
-  }
+          ),
+        ],
+      );
+    },
+  );
+}
+
   void _showLogoutConfirmationDialog(BuildContext context) {
     showDialog(
       context: context,
