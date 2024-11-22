@@ -63,6 +63,38 @@ class _IoTScreenState extends State<IoTScreen> {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              // Display current food stock level from HC-SR04 sensor
+              StreamBuilder<String>(
+                stream: mqttService
+                    .foodStockStream, // Assuming you have a stream for the stock level
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return CircularProgressIndicator(); // Show loading while waiting for data
+                  } else if (snapshot.hasError) {
+                    return Text('Error: ${snapshot.error}');
+                  } else if (snapshot.hasData) {
+                    return Text(
+                      'Stok Pakan: ${snapshot.data}%', // Display stock level in percentage
+                      style: GoogleFonts.poppins(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w500,
+                        color: const Color(0xFF594545),
+                      ),
+                    );
+                  } else {
+                    return Text(
+                      'Tidak ada data stok.',
+                      style: GoogleFonts.poppins(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w500,
+                        color: const Color(0xFF594545),
+                      ),
+                    );
+                  }
+                },
+              ),
+              const SizedBox(
+                  height: 20), // Space between the stock level and buttons
               ElevatedButton(
                 onPressed: () {
                   Navigator.of(context).pop(); // Close dialog
@@ -88,7 +120,7 @@ class _IoTScreenState extends State<IoTScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
-                      Icons.touch_app, // You can use an icon here
+                      Icons.touch_app, // Icon for manual control
                       color: const Color(0xFF594545),
                       size: 24,
                     ),
@@ -158,22 +190,124 @@ class _IoTScreenState extends State<IoTScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Monitoring'),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
+          title: Text(
+            'Monitoring',
+            style: GoogleFonts.poppins(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF594545),
+            ),
+          ),
           content: StreamBuilder(
-            stream: mqttService.dhtStream, // Stream untuk suhu dan kelembapan
+            stream: mqttService.dhtStream,
             builder: (context, snapshot) {
               if (snapshot.hasData) {
-                // Asumsikan snapshot.data adalah Map dengan key 'temperature' dan 'humidity'
                 var data = snapshot.data as Map<String, String>;
                 return Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text('Suhu: ${data['temperature']} °C'),
-                    Text('Kelembapan: ${data['humidity']} %'),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 8, horizontal: 12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFF8EA), // Background color
+                            borderRadius:
+                                BorderRadius.circular(12), // Rounded corners
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.grey
+                                    .withOpacity(0.3), // Shadow color
+                                spreadRadius: 2, // Shadow spread
+                                blurRadius: 5, // Shadow blur effect
+                                offset: const Offset(0, 3), // Shadow position
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(Icons.thermostat, color: Color(0xFF594545)),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Suhu: ${data['temperature']} °C',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                  color: Color(0xFF594545),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 8, horizontal: 12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFF8EA), // Background color
+                            borderRadius:
+                                BorderRadius.circular(12), // Rounded corners
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.grey
+                                    .withOpacity(0.3), // Shadow color
+                                spreadRadius: 2, // Shadow spread
+                                blurRadius: 5, // Shadow blur effect
+                                offset: const Offset(0, 3), // Shadow position
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(Icons.water_drop, color: Color(0xFF594545)),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Kelembapan: ${data['humidity']} %',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                  color: Color(0xFF594545),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ],
                 );
               } else {
-                return const CircularProgressIndicator(); // Loading jika data belum tersedia
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox(
+                      width: 120,
+                      height: 120,
+                      child: Image.asset(
+                        'assets/images/loading-cat.gif', // Path to your GIF
+                        fit: BoxFit.cover, // Ensures the GIF scales properly
+                      ),
+                    ),
+                    const SizedBox(height: 15),
+                    Text(
+                      'Loading data...',
+                      style: GoogleFonts.poppins(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                        color: Color(0xFF594545),
+                      ),
+                    ),
+                  ],
+                );
               }
             },
           ),
@@ -182,7 +316,13 @@ class _IoTScreenState extends State<IoTScreen> {
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: const Text('Tutup'),
+              child: Text(
+                'Tutup',
+                style: GoogleFonts.poppins(
+                  color: Color(0xFF594545),
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
             ),
           ],
         );
