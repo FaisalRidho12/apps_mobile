@@ -1,14 +1,16 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart'; // Import Firebase Auth
 import 'package:cloud_firestore/cloud_firestore.dart'; // Import Firestore
-import 'package:flutter_local_notifications/flutter_local_notifications.dart'; // Import umtuk notifications
-import 'package:audioplayers/audioplayers.dart'; // Import for alarm sound
+import 'package:flutter_local_notifications/flutter_local_notifications.dart'; // Import untuk notifications
+import 'package:audioplayers/audioplayers.dart'; // Import untuk alarm sound
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:workmanager/workmanager.dart';
 import 'add_schedule.dart'; // Import halaman Tambahkan Jadwal
+import 'package:image_picker/image_picker.dart';
 import 'iot.dart';
 import 'profile.dart';
 
@@ -21,36 +23,30 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   List<Map<String, dynamic>> schedules = [];
-  final PageController _pageController = PageController(initialPage: 0);
+  // List<Widget> images = [];
+  List<String> imagePaths = [];
+  late PageController _pageController;
+  // final PageController _pageController = PageController(initialPage: 0);
   int _currentPage = 0;
   Timer? _timer;
   FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
   AudioPlayer audioPlayer = AudioPlayer();
   bool isAlarmPlaying = false; // Menambahkan status alarm
   String username = 'User';
+  bool _showAddButton = false;
 
   @override
   void initState() {
     super.initState();
-    _initializeNotifications();
+    // _initializeNotifications();
     _startAutoSlide(); // Memulai animasi otomatis 
     _loadSchedules();
     _checkSchedules();
     _fetchUsername();
+    _pageController = PageController(initialPage: 0);
+    _loadImages();
     Workmanager().initialize(callbackDispatcher, isInDebugMode: false);
     _scheduleBackgroundAlarms();
-  }
-
-  // Fungsi untuk mengambil username dari Firestore
-  Future<void> _fetchUsername() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      final uid = user.uid;
-      final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
-      setState(() {
-        username = userDoc['username'] ?? 'User';
-      });
-    }
   }
 
   @override
@@ -61,101 +57,177 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
-  // Inisialisasi notifikasi
-  void _initializeNotifications() {
-    const AndroidInitializationSettings initializationSettingsAndroid =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
-    const InitializationSettings initializationSettings =
-        InitializationSettings(android: initializationSettingsAndroid);    
-    flutterLocalNotificationsPlugin.initialize(initializationSettings);
+   Future<void> _fetchUsername() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      final uid = user.uid;
+      final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      setState(() {
+        username = userDoc['username'] ?? 'User';
+      });
+    }
   }
+  
+  // Fungsi untuk memilih gambar dari galeri
+  Future<void> _loadImages() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    List<String> savedPaths = prefs.getStringList('images') ?? [];
 
-  // Fungsi untuk memulai animasi slide otomatis
-  void _startAutoSlide() {
-    _timer = Timer.periodic(const Duration(seconds: 3), (Timer timer) {
-      if (_currentPage < 2) {
-        _currentPage++;
-      } else {
-        _currentPage = 0;
+    setState(() {
+      imagePaths = savedPaths;
+
+      // Tambahkan gambar default jika belum ada gambar
+      if (imagePaths.isEmpty) {
+        imagePaths.addAll([
+          'assets/images/cat1.png',
+          'assets/images/cat2.png',
+          'assets/images/cat3.png',
+        ]);
       }
-
-      // Memindahkan halaman menggunakan PageController
-      _pageController.animateToPage(
-        _currentPage,
-        duration: const Duration(milliseconds: 500),
-        curve: Curves.easeInOut,
-      );
     });
   }
 
-// Fungsi untuk menyimpan data jadwal ke SharedPreferences
-  Future<void> _saveSchedules() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String encodedData = jsonEncode(schedules); // Encode data ke format JSON
-    await prefs.setString('schedules', encodedData); // Simpan data
+  Future<void> _pickImage() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? pickedFile = await picker.pickImage(source: ImageSource.gallery);
+
+    if (pickedFile != null) {
+      setState(() {
+        imagePaths.add(pickedFile.path); // Tambahkan path baru
+      });
+
+      // Simpan gambar baru ke SharedPreferences
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      prefs.setStringList('images', imagePaths);
+
+      // Pindah ke gambar terakhir dengan animasi
+      Future.delayed(Duration.zero, () {
+        _pageController.animateToPage(
+          imagePaths.length - 1,
+          duration: const Duration(milliseconds: 500),
+          curve: Curves.easeInOut,
+        );
+      });
+    }
   }
 
-  // Fungsi untuk memuat data jadwal dari SharedPreferences
+  // Fungsi untuk menghapus gambar
+  void _deleteImage(int index) async {
+    setState(() {
+      imagePaths.removeAt(index); // Hapus gambar dari list
+    });
+
+    // Simpan perubahan ke SharedPreferences
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setStringList('images', imagePaths);
+  }
+
+  // void _initializeNotifications() {
+  //   const AndroidInitializationSettings initializationSettingsAndroid =
+  //       AndroidInitializationSettings('@mipmap/ic_launcher');
+  //   const InitializationSettings initializationSettings =
+  //       InitializationSettings(android: initializationSettingsAndroid);    
+  //   flutterLocalNotificationsPlugin.initialize(initializationSettings);
+  // }
+
+  void _startAutoSlide() {
+    Future.delayed(const Duration(seconds: 3), () {
+      if (_pageController.hasClients) {
+        setState(() {
+          _currentPage = (_currentPage + 1) % imagePaths.length;
+        });
+        _pageController.animateToPage(
+          _currentPage,
+          duration: const Duration(milliseconds: 500),
+          curve: Curves.easeInOut,
+        );
+        _startAutoSlide(); // Panggil kembali untuk loop animasi
+      }
+    });
+  }
+
+
+  Future<void> _saveSchedules() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String encodedData = jsonEncode(schedules);
+    await prefs.setString('schedules', encodedData);
+  }
+
   Future<void> _loadSchedules() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? encodedData = prefs.getString('schedules');
-    setState(() {
-      schedules = List<Map<String, dynamic>>.from(jsonDecode(encodedData!)); // Decode data dari JSON
-    });
-    }
-
-  void _scheduleBackgroundAlarms() {
-    for (var schedule in schedules) {
-      if (schedule['isOn'] == true) {
-        // DateTime scheduleDateTime = _parseScheduleDateTime(schedule['time']);
-        DateTime scheduleDateTime = DateTime.parse("${schedule['date']} ${schedule['time']}");
-        Duration timeDifference = scheduleDateTime.difference(DateTime.now());
-        if (timeDifference.isNegative) continue;
-
-        Workmanager().registerOneOffTask(
-          "alarm_${schedule['name']}",
-          "alarmTask",
-          inputData: {
-            "name": schedule['name'],
-            "date" : schedule['date'],
-            "time": schedule['time'],
-          },
-          initialDelay: timeDifference,
-        );
-      }
+    if (encodedData != null) {
+      setState(() {
+        schedules = List<Map<String, dynamic>>.from(jsonDecode(encodedData));
+      });
     }
   }
 
-  static void callbackDispatcher() {
-    Workmanager().executeTask((task, inputData) async {
-      final flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
-      const AndroidNotificationDetails androidPlatformChannelSpecifics =
-          AndroidNotificationDetails(
-        'Notification Channel ID',
-        'Schedule Reminder',
-        importance: Importance.max,
-        priority: Priority.high,
-      );
-      const NotificationDetails platformChannelSpecifics =
-          NotificationDetails(android: androidPlatformChannelSpecifics);
+void _scheduleBackgroundAlarms() {
+  for (var schedule in schedules) {
+    if (schedule['isOn'] == true) {
+      DateTime scheduleDateTime = DateTime.parse("${schedule['date']} ${schedule['time']}");
+      Duration timeDifference = scheduleDateTime.difference(DateTime.now());
+      if (timeDifference.isNegative) continue;
 
-      await flutterLocalNotificationsPlugin.show(
-        0,
-        'Scheduled Time Reached',
-        'It\'s time for ${inputData?['name']}!',
-        platformChannelSpecifics,
+      Workmanager().registerOneOffTask(
+        "alarm_${schedule['name']}_${scheduleDateTime.millisecondsSinceEpoch}",
+        "alarmTask",
+        inputData: {
+          "name": schedule['name'],
+          "date": schedule['date'],
+          "time": schedule['time'],
+        },
+        initialDelay: timeDifference,
+        constraints: Constraints(
+          networkType: NetworkType.not_required,
+          requiresBatteryNotLow: true,
+        ),
       );
-
-      final audioPlayer = AudioPlayer();
-      await audioPlayer.setSource(AssetSource('alarm_sound.mp3'));
-      audioPlayer.setReleaseMode(ReleaseMode.loop);
-      await audioPlayer.resume();
-      return Future.value(true);
-    });
+    }
   }
+}
 
 
-  // Tampilkan notifikasi
+static void callbackDispatcher() {
+  Workmanager().executeTask((task, inputData) async {
+    final flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+
+    const AndroidInitializationSettings initializationSettingsAndroid =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
+    const InitializationSettings initializationSettings =
+        InitializationSettings(android: initializationSettingsAndroid);
+
+    await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+
+    const AndroidNotificationDetails androidPlatformChannelSpecifics =
+        AndroidNotificationDetails(
+      'Notification Channel ID',
+      'Schedule Reminder',
+      importance: Importance.max,
+      priority: Priority.high,
+    );
+    const NotificationDetails platformChannelSpecifics =
+        NotificationDetails(android: androidPlatformChannelSpecifics);
+
+    await flutterLocalNotificationsPlugin.show(
+      0,
+      'Scheduled Reminder',
+      'It\'s time for ${inputData?['name']}!',
+      platformChannelSpecifics,
+    );
+
+    // Play alarm sound (if necessary)
+    final audioPlayer = AudioPlayer();
+    await audioPlayer.setSource(AssetSource('alarm_sound.mp3'));
+    audioPlayer.setReleaseMode(ReleaseMode.loop);
+    await audioPlayer.resume();
+
+    return Future.value(true);
+  });
+}
+
+
   void _showNotification(String scheduleName) async {
     const AndroidNotificationDetails androidPlatformChannelSpecifics =
         AndroidNotificationDetails(
@@ -191,52 +263,33 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  // Fungsi untuk mengecek apakah jadwal sudah mencapai waktunya
   void _checkSchedules() {
-  _timer = Timer.periodic(const Duration(minutes: 1), (Timer timer) {
-    final now = DateTime.now();
-    for (var schedule in schedules) {
-      if (schedule['isOn'] == true) {
-        DateTime scheduleDateTime = DateTime.parse("${schedule['date']} ${schedule['time']}");
-        if (now.year == scheduleDateTime.year &&
-            now.month == scheduleDateTime.month &&
-            now.day == scheduleDateTime.day &&
-            now.hour == scheduleDateTime.hour &&
-            now.minute == scheduleDateTime.minute) {
-          _showNotification(schedule['name']);
-          _playAlarm();
+    _timer = Timer.periodic(const Duration(minutes: 1), (Timer timer) {
+      final now = DateTime.now();
+      for (var schedule in schedules) {
+        if (schedule['isOn'] == true) {
+          DateTime scheduleDateTime = DateTime.parse("${schedule['date']} ${schedule['time']}");
+          if (now.year == scheduleDateTime.year &&
+              now.month == scheduleDateTime.month &&
+              now.day == scheduleDateTime.day &&
+              now.hour == scheduleDateTime.hour &&
+              now.minute == scheduleDateTime.minute) {
+            _showNotification(schedule['name']);
+            _playAlarm();
+          }
         }
       }
-    }
-  });
-}
+    });
+  }
 
-  // Parse waktu dari string ke TimeOfDay
   TimeOfDay _parseTime(String time) {
     final parts = time.split(':');
     return TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]));
   }
 
-  // String get username {
-  //   final user = FirebaseAuth.instance.currentUser;
-  //   return user != null ? user.email?.split('@')[0] ?? "User" : "User";
-  // }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // appBar: AppBar(
-      //   backgroundColor: Colors.transparent,
-      //   elevation: 0,
-      //   // actions: const [
-      //   //   Padding(
-      //   //     padding: EdgeInsets.only(right: 16.0),
-      //   //     child: CircleAvatar(
-      //   //       backgroundImage: AssetImage('assets/images/pp.png'),
-      //   //     ),
-      //   //   ),
-      //   // ],
-      // ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0),
           child: Column(
@@ -265,44 +318,75 @@ class _HomeScreenState extends State<HomeScreen> {
               onTap: () {
                 setState(() {
                   // Manual slide ketika gambar ditekan
-                  _currentPage = (_currentPage + 1) % 3;
-                  _pageController.animateToPage(
-                    _currentPage,
-                    duration: const Duration(milliseconds: 500),
-                    curve: Curves.easeInOut,
-                  );
+                  // _currentPage = (_currentPage + 1) % 3;
+                  // _pageController.animateToPage(
+                  //   _currentPage,
+                  //   duration: const Duration(milliseconds: 500),
+                  //   curve: Curves.easeInOut,
+                  // );
+                  _showAddButton = !_showAddButton;
                 });
               },
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(16.0),
                 child: SizedBox(
-                  height: 200,
+                  height: 240,
                   width: double.infinity,
-                  child: PageView(
+                  child: PageView.builder(
                     controller: _pageController,
                     onPageChanged: (index) {
                       setState(() {
-                        _currentPage = index; // Update halaman saat berubah manual
+                        _currentPage = index; // Update halaman saat berubah
                       });
                     },
-                    children: const [
-                      Image(
-                        image: AssetImage('assets/images/cat1.png'),
-                        fit: BoxFit.cover,
-                      ),
-                      Image(
-                        image: AssetImage('assets/images/cat2.png'),
-                        fit: BoxFit.cover,
-                      ),
-                      Image(
-                        image: AssetImage('assets/images/cat3.png'),
-                        fit: BoxFit.cover,
-                      ),
-                    ],
+                    itemCount: imagePaths.length,
+                    itemBuilder: (context, index) {
+                      final imagePath = imagePaths[index];
+                      return GestureDetector(
+                        onLongPress: () {
+                          // Tampilkan dialog konfirmasi hapus gambar
+                          showDialog(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              title: const Text('Hapus Gambar'),
+                              content: const Text('Apakah Anda yakin ingin menghapus gambar ini?'),
+                              actions: [
+                                TextButton(
+                                  onPressed: () {
+                                    Navigator.pop(context); // Tutup dialog
+                                  },
+                                  child: const Text('Batal'),
+                                ),
+                                TextButton(
+                                  onPressed: () {
+                                    _deleteImage(index); // Hapus gambar
+                                    Navigator.pop(context); // Tutup dialog
+                                  },
+                                  child: const Text('Hapus'),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                        child: imagePath.startsWith('assets/')
+                            ? Image.asset(imagePath, fit: BoxFit.cover)
+                            : Image.file(File(imagePath), fit: BoxFit.cover),
+                      );
+                    },
                   ),
                 ),
               ),
             ),
+              if (_showAddButton)
+              Center(
+                child: ElevatedButton(
+                  onPressed: _pickImage,
+                  style: ElevatedButton.styleFrom(
+                    foregroundColor: Colors.white, backgroundColor: Colors.brown, // Warna teks putih
+                  ),
+                  child: const Text("Tambah Gambar"),
+                ),
+              ),
             const SizedBox(height: 16),
             Container(
               decoration: BoxDecoration(
@@ -404,21 +488,21 @@ class _HomeScreenState extends State<HomeScreen> {
         currentIndex: 0, // Menetapkan Home sebagai halaman awal
         onTap: (int index) {
           if (index == 0) {
-            Navigator.pushReplacement(
+            Navigator.push(
               context,
               MaterialPageRoute(
                 builder: (context) => const HomeScreen(),
               ),
             );
           } else if (index == 1) {
-            Navigator.pushReplacement(
+            Navigator.push(
               context,
               MaterialPageRoute(
                 builder: (context) => const IoTScreen(), // Mengarahkan ke halaman IoT
               ),
             );
           } else if (index == 2) {
-            Navigator.pushReplacement(
+            Navigator.push(
               context,
               MaterialPageRoute(
                 builder: (context) => const ProfileScreen(), // Mengarahkan ke halaman Profile

@@ -1,10 +1,14 @@
 import 'package:cat_care/autenti/login.dart';
+//import 'package:cat_care/main.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'home.dart';
 import 'iot.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'notifikasi.dart';
+import 'delete.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -75,10 +79,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
               );
             }),
             _buildMenuItem(context, Icons.notifications, 'Notifikasi', () {
-              
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const NotificationScreen()),
+              );
             }),
             _buildMenuItem(context, Icons.info_outline, 'Tentang Kami', () {
-              
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SettingsScreen()),
+              );
             }),
           ],
         ),
@@ -133,7 +143,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         } else if (index == 1) {
           Navigator.pushAndRemoveUntil(
             context,
-            MaterialPageRoute(builder: (context) => const IoTContent()),
+            MaterialPageRoute(builder: (context) => const IoTScreen()),
             (Route<dynamic> route) => false,
           );
         }
@@ -196,9 +206,14 @@ class SettingsScreen extends StatelessWidget {
               style: GoogleFonts.poppins(fontSize: 16, color: Colors.grey),
             ),
             const SizedBox(height: 32),
-            // _buildAccountMenuItem(Icons.person_add, 'Tambahkan Akun', () {}),
             _buildAccountMenuItem(Icons.delete, 'Hapus Akun', () {
-              _showDeleteAccountDialog(context);
+              // _showDeleteAccountDialog(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const DeleteAccountConfirmationPage(),
+                ),
+              );
             }),
             _buildAccountMenuItem(Icons.edit, 'Ganti Password', () {
               Navigator.push(
@@ -214,6 +229,7 @@ class SettingsScreen extends StatelessWidget {
       ),
     );
   }
+
   Widget _buildAccountMenuItem(IconData icon, String title, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
@@ -246,79 +262,80 @@ class SettingsScreen extends StatelessWidget {
       ),
     );
   }
-void _showDeleteAccountDialog(BuildContext context) {
-  showDialog(
-    context: context,
-    builder: (BuildContext context) {
-      return AlertDialog(
-        backgroundColor: const Color(0xFFF8EDEB), // Sesuaikan dengan tema luar
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20), // Membuat sudut dialog melengkung
-        ),
-        title: Text(
-          'Hapus Akun',
-          style: GoogleFonts.poppins(
-            color: const Color(0xFF594545), // Warna sesuai dengan tema
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        content: Text(
-          'Apakah Anda yakin ingin menghapus akun ini?',
-          style: GoogleFonts.poppins(
-            color: const Color(0xFF594545), // Warna sesuai dengan tema
-          ),
-        ),
-        actions: [
-          TextButton(
-            style: TextButton.styleFrom(
-              foregroundColor: Colors.white,
-              backgroundColor: const Color(0xFFB5838D), // Warna tombol "Batal"
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(
-              'Batal',
-              style: GoogleFonts.poppins(),
-            ),
-          ),
-          TextButton(
-            style: TextButton.styleFrom(
-              foregroundColor: Colors.white,
-              backgroundColor: const Color(0xFF6D6875), // Warna tombol "Hapus"
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-            onPressed: () async {
-              Navigator.of(context).pop();
-              final user = FirebaseAuth.instance.currentUser;
-              if (user != null) {
-                try {
-                  await FirebaseFirestore.instance
-                      .collection('users')
-                      .doc(user.uid)
-                      .delete();
-                  await user.delete();
-                  await FirebaseAuth.instance.signOut();
-                } catch (e) {
-                  print("Error menghapus akun: $e");
-                }
-              }
-            },
-            child: Text(
-              'Hapus',
-              style: GoogleFonts.poppins(),
-            ),
-          ),
-        ],
-      );
-    },
-  );
-}
+
+  // void _showDeleteAccountDialog(BuildContext context) {
+  //   showDialog(
+  //     context: context,
+  //     builder: (BuildContext context) {
+  //       return AlertDialog(
+  //         title: Text(
+  //           'Hapus Akun',
+  //           style: GoogleFonts.poppins(),
+  //         ),
+  //         content: Text(
+  //           'Apakah Anda yakin ingin menghapus akun ini?',
+  //           style: GoogleFonts.poppins(),
+  //         ),
+  //         actions: [
+  //           TextButton(
+  //             onPressed: () => Navigator.of(context).pop(),
+  //             child: Text(
+  //               'Batal',
+  //               style: GoogleFonts.poppins(),
+  //             ),
+  //           ),
+  //           TextButton(
+  //             onPressed: () async {
+  //               Navigator.of(context).pop();
+  //               final user = FirebaseAuth.instance.currentUser;
+  //               if (user != null) {
+  //                 try {
+  //                   // Menghapus data akun dari Firestore
+  //                   await FirebaseFirestore.instance
+  //                       .collection('users')
+  //                       .doc(user.uid)
+  //                       .delete();
+
+  //                   // Menghapus akun pengguna dari Firebase
+  //                   await user.delete();
+
+  //                   // Menghapus data login dari SharedPreferences
+  //                   SharedPreferences prefs = await SharedPreferences.getInstance();
+  //                   await prefs.clear();
+  //                   // await prefs.remove('isLoggedIn');  // Menghapus status login
+  //                   // await prefs.remove('email');  // Menghapus email
+  //                   // await prefs.remove('username');  // Menghapus username
+  //                   // await prefs.remove('password');  // Menghapus password (jika ada)
+
+  //                   // Logout pengguna
+  //                   await FirebaseAuth.instance.signOut();
+
+  //                   // Navigasi ke halaman login
+  //                   Navigator.pushAndRemoveUntil(
+  //                     context,
+  //                     MaterialPageRoute(builder: (context) => const LoginScreen()),
+  //                     (Route<dynamic> route) => false,
+  //                   );
+  //                   print('Navigasi ke halaman login berhasil dipanggil.');
+
+  //                 } catch (e) {
+  //                   print("Error menghapus akun: $e");
+  //                   ScaffoldMessenger.of(context).showSnackBar(
+  //                   SnackBar(content: Text('Gagal menghapus akun. Coba lagi!')),
+  //                 );
+  //                 }
+  //               }
+  //             },
+  //             child: Text(
+  //               'Hapus',
+  //               style: GoogleFonts.poppins(),
+  //             ),
+  //           ),
+  //         ],
+  //       );
+  //     },
+  //   );
+  // }
 
   void _showLogoutConfirmationDialog(BuildContext context) {
     showDialog(
@@ -342,13 +359,19 @@ void _showDeleteAccountDialog(BuildContext context) {
               ),
             ),
             TextButton(
-              onPressed: () {
-                FirebaseAuth.instance.signOut().then((value) {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (context) => const LoginScreen()),
-                  );
-                });
+              onPressed: () async {
+                // Melakukan logout dengan Firebase
+                await FirebaseAuth.instance.signOut();
+
+                // Menghapus status login dari SharedPreferences
+                SharedPreferences prefs = await SharedPreferences.getInstance();
+                await prefs.setBool('isLoggedIn', false);  // Set status login menjadi false
+
+                // Arahkan pengguna ke halaman login
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => const LoginScreen()),
+                );
               },
               child: Text(
                 'Logout',
@@ -598,16 +621,16 @@ class _ChangePasswordWidgetState extends State<ChangePasswordWidget> {
                     ? const CircularProgressIndicator()
                     : ElevatedButton(
                         onPressed: _changePassword,
-                        child: Text(
-                          'Ganti',
-                          style: GoogleFonts.poppins(color: Colors.white),
-                        ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF594545),
                           padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
+                        ),
+                        child: Text(
+                          'Ganti',
+                          style: GoogleFonts.poppins(color: Colors.white),
                         ),
                       ),
               ),
