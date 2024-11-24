@@ -1,5 +1,6 @@
+import 'dart:io';
 import 'package:cat_care/autenti/login.dart';
-//import 'package:cat_care/main.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -19,6 +20,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   int _currentIndex = 2;
   User? user;
   String displayName = 'Username';
+  String email = '';
+  XFile? _selectedImage;
+  bool _showOptions = false;
+
   @override
   void initState() {
     super.initState();
@@ -27,30 +32,58 @@ class _ProfileScreenState extends State<ProfileScreen> {
       _fetchUsername(); 
     }
   }
+
   Future<void> _fetchUsername() async {
-    try {
-      DocumentSnapshot snapshot = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user!.uid)
-          .get();
-      if (snapshot.exists) {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      final uid = user.uid;
+      try {
+        DocumentSnapshot userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
         setState(() {
-          displayName = snapshot.get('displayName') ?? 'Username';
+          displayName = userDoc['username'] ?? 'User'; // Ambil username dari Firestore
+          email = user.email ?? '';
         });
-      } else {
-        print('Dokumen tidak ditemukan');
+      } catch (e) {
+        print('Error fetching username: $e');
+        setState(() {
+          displayName = 'User'; // Jika terjadi error, tampilkan default username
+          email = user.email ?? 'Not available';
+        });
       }
-    } catch (e) {
-      print('Error fetching username: $e');
     }
   }
+
+    Future<void> _pickImage() async {
+    final ImagePicker _picker = ImagePicker();
+    try {
+      final XFile? pickedImage = await _picker.pickImage(source: ImageSource.gallery);
+      if (pickedImage != null) {
+        setState(() {
+          _selectedImage = pickedImage;
+          _showOptions = false; // Sembunyikan opsi setelah gambar dipilih
+        });
+      }
+    } catch (e) {
+      print('Error picking image: $e');
+    }
+  }
+
+    void _removeImage() {
+    setState(() {
+      _selectedImage = null; // Menghapus gambar dengan mengatur menjadi null
+      _showOptions = false;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text(
           'Profile',
-          style: GoogleFonts.poppins(color: const Color(0xFF594545), fontSize: 24),
+          style: GoogleFonts.poppins(color: const Color(0xFF594545),
+           fontSize: 24,
+           fontWeight: FontWeight.bold,),
         ),
         centerTitle: true,
       ),
@@ -58,17 +91,41 @@ class _ProfileScreenState extends State<ProfileScreen> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            const CircleAvatar(
-              radius: 40,
-              backgroundImage: AssetImage('assets/images/pp.png'),
+            GestureDetector(
+              onTap: () {
+                setState(() {
+                  _showOptions = !_showOptions; // Toggle tampilan opsi saat gambar ditekan
+                });
+              },
+              child: CircleAvatar(
+                radius: 40,
+                backgroundImage: _selectedImage != null
+                    ? FileImage(File(_selectedImage!.path))
+                    : const AssetImage('assets/images/pp.png') as ImageProvider,
+              ),
             ),
+            const SizedBox(height: 16),
+            if (_showOptions) 
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.photo_library),  // Ikon galeri
+                    onPressed: _pickImage,
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.delete),  // Ikon tempat sampah
+                    onPressed: _removeImage,
+                  ),
+                ],
+              ),
             const SizedBox(height: 16),
             Text(
               displayName,
               style: GoogleFonts.poppins(fontSize: 22, fontWeight: FontWeight.bold, color: const Color(0xFF594545)),
             ),
             Text(
-              user?.email ?? 'username@gmail.com',
+              email,
               style: GoogleFonts.poppins(fontSize: 16, color: Colors.grey),
             ),
             const SizedBox(height: 32),
@@ -121,12 +178,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
               title,
               style: GoogleFonts.poppins(fontSize: 18, color: const Color(0xFF594545)),
             ),
-            const Spacer(),
           ],
         ),
       ),
     );
   }
+
   Widget _buildBottomNavigationBar() {
     return BottomNavigationBar(
       currentIndex: _currentIndex,
@@ -135,16 +192,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
           _currentIndex = index;
         });
         if (index == 0) {
-          Navigator.pushAndRemoveUntil(
+          Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => const HomeScreen()),
-            (Route<dynamic> route) => false,
+            // (Route<dynamic> route) => false,
           );
         } else if (index == 1) {
-          Navigator.pushAndRemoveUntil(
+          Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => const IoTScreen()),
-            (Route<dynamic> route) => false,
+            // (Route<dynamic> route) => false,
           );
         }
       },
@@ -168,8 +225,71 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 }
-class SettingsScreen extends StatelessWidget {
+
+class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
+
+  @override
+  _SettingsScreenState createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<SettingsScreen> {
+  User? user;
+  String displayName = 'Username';
+  String email = '';
+  XFile? _selectedImage;
+  bool _showOptions= false;
+
+  @override
+  void initState() {
+    super.initState();
+    user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      _fetchUsername();
+    }
+  }
+
+  Future<void> _fetchUsername() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      final uid = user.uid;
+      try {
+        DocumentSnapshot userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+        setState(() {
+          displayName = userDoc['username'] ?? 'User';
+          email = user.email ?? ''; // Ambil email dari FirebaseAuth
+        });
+      } catch (e) {
+        print('Error fetching username: $e');
+        setState(() {
+          displayName = 'User'; // Jika terjadi error, tampilkan default username
+          email = user.email ?? 'Not available'; // Jika email tidak ditemukan
+        });
+      }
+    }
+  }
+
+      Future<void> _pickImage() async {
+    final ImagePicker _picker = ImagePicker();
+    try {
+      final XFile? pickedImage = await _picker.pickImage(source: ImageSource.gallery);
+      if (pickedImage != null) {
+        setState(() {
+          _selectedImage = pickedImage;
+          _showOptions = false; // Sembunyikan opsi setelah gambar dipilih
+        });
+      }
+    } catch (e) {
+      print('Error picking image: $e');
+    }
+  }
+
+    void _removeImage() {
+    setState(() {
+      _selectedImage = null; // Menghapus gambar dengan mengatur menjadi null
+      _showOptions = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -184,7 +304,9 @@ class SettingsScreen extends StatelessWidget {
         ),
         title: Text(
           'Akun',
-          style: GoogleFonts.poppins(color: const Color(0xFF594545), fontSize: 24),
+          style: GoogleFonts.poppins(color: const Color(0xFF594545),
+          fontSize: 24,
+          fontWeight: FontWeight.bold,),
         ),
         centerTitle: true,
       ),
@@ -192,17 +314,41 @@ class SettingsScreen extends StatelessWidget {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            const CircleAvatar(
-              radius: 40,
-              backgroundImage: AssetImage('assets/images/pp.png'),
+           GestureDetector(
+              onTap: () {
+                setState(() {
+                  _showOptions = !_showOptions; // Toggle tampilan opsi saat gambar ditekan
+                });
+              },
+              child: CircleAvatar(
+                radius: 40,
+                backgroundImage: _selectedImage != null
+                    ? FileImage(File(_selectedImage!.path))
+                    : const AssetImage('assets/images/pp.png') as ImageProvider,
+              ),
             ),
             const SizedBox(height: 16),
+            if (_showOptions) 
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.photo_library),  // Ikon galeri
+                    onPressed: _pickImage,
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.delete),  // Ikon tempat sampah
+                    onPressed: _removeImage,
+                  ),
+                ],
+              ),
+            const SizedBox(height: 16),
             Text(
-              'Username',
+              displayName,
               style: GoogleFonts.poppins(fontSize: 22, fontWeight: FontWeight.bold, color: const Color(0xFF594545)),
             ),
             Text(
-              'username@gmail.com',
+              email,
               style: GoogleFonts.poppins(fontSize: 16, color: Colors.grey),
             ),
             const SizedBox(height: 32),
@@ -262,80 +408,6 @@ class SettingsScreen extends StatelessWidget {
       ),
     );
   }
-
-  // void _showDeleteAccountDialog(BuildContext context) {
-  //   showDialog(
-  //     context: context,
-  //     builder: (BuildContext context) {
-  //       return AlertDialog(
-  //         title: Text(
-  //           'Hapus Akun',
-  //           style: GoogleFonts.poppins(),
-  //         ),
-  //         content: Text(
-  //           'Apakah Anda yakin ingin menghapus akun ini?',
-  //           style: GoogleFonts.poppins(),
-  //         ),
-  //         actions: [
-  //           TextButton(
-  //             onPressed: () => Navigator.of(context).pop(),
-  //             child: Text(
-  //               'Batal',
-  //               style: GoogleFonts.poppins(),
-  //             ),
-  //           ),
-  //           TextButton(
-  //             onPressed: () async {
-  //               Navigator.of(context).pop();
-  //               final user = FirebaseAuth.instance.currentUser;
-  //               if (user != null) {
-  //                 try {
-  //                   // Menghapus data akun dari Firestore
-  //                   await FirebaseFirestore.instance
-  //                       .collection('users')
-  //                       .doc(user.uid)
-  //                       .delete();
-
-  //                   // Menghapus akun pengguna dari Firebase
-  //                   await user.delete();
-
-  //                   // Menghapus data login dari SharedPreferences
-  //                   SharedPreferences prefs = await SharedPreferences.getInstance();
-  //                   await prefs.clear();
-  //                   // await prefs.remove('isLoggedIn');  // Menghapus status login
-  //                   // await prefs.remove('email');  // Menghapus email
-  //                   // await prefs.remove('username');  // Menghapus username
-  //                   // await prefs.remove('password');  // Menghapus password (jika ada)
-
-  //                   // Logout pengguna
-  //                   await FirebaseAuth.instance.signOut();
-
-  //                   // Navigasi ke halaman login
-  //                   Navigator.pushAndRemoveUntil(
-  //                     context,
-  //                     MaterialPageRoute(builder: (context) => const LoginScreen()),
-  //                     (Route<dynamic> route) => false,
-  //                   );
-  //                   print('Navigasi ke halaman login berhasil dipanggil.');
-
-  //                 } catch (e) {
-  //                   print("Error menghapus akun: $e");
-  //                   ScaffoldMessenger.of(context).showSnackBar(
-  //                   SnackBar(content: Text('Gagal menghapus akun. Coba lagi!')),
-  //                 );
-  //                 }
-  //               }
-  //             },
-  //             child: Text(
-  //               'Hapus',
-  //               style: GoogleFonts.poppins(),
-  //             ),
-  //           ),
-  //         ],
-  //       );
-  //     },
-  //   );
-  // }
 
   void _showLogoutConfirmationDialog(BuildContext context) {
     showDialog(
@@ -502,7 +574,9 @@ class _ChangePasswordWidgetState extends State<ChangePasswordWidget> {
       appBar: AppBar(
         title: Text(
           'Ganti Password',
-          style: GoogleFonts.poppins(color: const Color(0xFF594545), fontSize: 24),
+          style: GoogleFonts.poppins(color: const Color(0xFF594545),
+          fontSize: 24,
+          fontWeight: FontWeight.bold,),
         ),
         centerTitle: true,
         backgroundColor: Colors.transparent,

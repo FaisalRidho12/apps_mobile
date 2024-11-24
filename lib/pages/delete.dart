@@ -19,7 +19,9 @@ class DeleteAccountConfirmationPage extends StatelessWidget {
         // ),
         title: Text(
           'Hapus Akun',
-          style: GoogleFonts.poppins(color: const Color(0xFF594545), fontSize: 24),
+          style: GoogleFonts.poppins(color: const Color(0xFF594545),
+          fontSize: 24,
+          fontWeight: FontWeight.bold,),
         ),
         centerTitle: true,
       ),
