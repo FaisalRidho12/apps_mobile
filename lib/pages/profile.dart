@@ -31,6 +31,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (user != null) {
       _fetchUsername(); 
     }
+    _loadImage();
   }
 
   Future<void> _fetchUsername() async {
@@ -62,6 +63,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           _selectedImage = pickedImage;
           _showOptions = false; // Sembunyikan opsi setelah gambar dipilih
         });
+        _saveImagePath(pickedImage.path);
       }
     } catch (e) {
       print('Error picking image: $e');
@@ -73,6 +75,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
       _selectedImage = null; // Menghapus gambar dengan mengatur menjadi null
       _showOptions = false;
     });
+    _clearImagePath();
+  }
+
+   // Save the image path to SharedPreferences
+  Future<void> _saveImagePath(String imagePath) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setString('profile_image', imagePath);
+  }
+
+  // Load the image from SharedPreferences
+  Future<void> _loadImage() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? imagePath = prefs.getString('profile_image');
+    if (imagePath != null) {
+      setState(() {
+        _selectedImage = XFile(imagePath); // Load the saved image path
+      });
+    }
+  }
+
+  // Clear the image path in SharedPreferences
+  Future<void> _clearImagePath() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.remove('profile_image');
   }
 
   @override
@@ -247,6 +273,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (user != null) {
       _fetchUsername();
     }
+    _loadImage();
   }
 
   Future<void> _fetchUsername() async {
@@ -278,6 +305,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           _selectedImage = pickedImage;
           _showOptions = false; // Sembunyikan opsi setelah gambar dipilih
         });
+        _saveImagePath(pickedImage.path);
       }
     } catch (e) {
       print('Error picking image: $e');
@@ -289,6 +317,29 @@ class _SettingsScreenState extends State<SettingsScreen> {
       _selectedImage = null; // Menghapus gambar dengan mengatur menjadi null
       _showOptions = false;
     });
+    _clearImagePath();
+  }
+
+    Future<void> _saveImagePath(String imagePath) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setString('profile_image', imagePath);
+  }
+
+  // Load the image from SharedPreferences
+  Future<void> _loadImage() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? imagePath = prefs.getString('profile_image');
+    if (imagePath != null) {
+      setState(() {
+        _selectedImage = XFile(imagePath); // Load the saved image path
+      });
+    }
+  }
+
+  // Clear the image path in SharedPreferences
+  Future<void> _clearImagePath() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.remove('profile_image');
   }
 
   @override

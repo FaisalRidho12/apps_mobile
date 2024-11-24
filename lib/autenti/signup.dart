@@ -19,15 +19,27 @@ class _SignupScreenState extends State<SignupScreen> {
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController = TextEditingController();
   String? errorMessage;
+  bool _isLoading = false;
   bool _obscuretext = true;
 
   Future<void> _signup() async {
+    // Validasi panjang password
+    if (_passwordController.text.length < 6) {
+      setState(() {
+        errorMessage = "Password harus memiliki minimal 6 karakter.";
+      });
+      return;
+    }
     if (_passwordController.text != _confirmPasswordController.text) {
       setState(() {
         errorMessage = "Passwords Salah";
       });
       return;
     }
+    setState(() {
+      _isLoading = true; // Mulai loading
+      errorMessage = null; // Reset error message
+    });
 
     try {
       // Buat akun dengan email dan password
@@ -50,12 +62,27 @@ class _SignupScreenState extends State<SignupScreen> {
         MaterialPageRoute(builder: (context) => const LoginScreen(showSuccessMessage: true),
         ),
       );
+    }on FirebaseAuthException catch (e) {
+    // Tangani error jika akun sudah ada
+    if (e.code == 'email-already-in-use') {
+      setState(() {
+        errorMessage = "Akun dengan email ini sudah terdaftar.";
+      });
+    } else {
+        setState(() {
+          errorMessage = e.message; // Tampilkan pesan error lainnya
+        });
+      }
     } catch (e) {
       setState(() {
-        errorMessage = e.toString();
+        errorMessage = "Terjadi kesalahan, silakan coba lagi.";
       });
+    } finally {
+        setState(() {
+          _isLoading = false; // Hentikan loading
+        });
+      }
     }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -99,7 +126,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      buildTextField('E-mail', _emailController, 'E-mail'),
+                      buildTextField('E-mail', _emailController, 'example@gmail.com'),
                       const SizedBox(height: 16),
                       buildTextField('Username', _usernameController, 'Username'),
                       const SizedBox(height: 16),
@@ -116,21 +143,23 @@ class _SignupScreenState extends State<SignupScreen> {
                       Align(
                         alignment: Alignment.centerRight,
                         child: ElevatedButton(
-                          onPressed: _signup,
+                          onPressed: _isLoading ? null : _signup,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF5D4037),
+                            backgroundColor: const Color(0xFF5E3C3C),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
                             ),
                             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                           ),
-                          child: Text(
-                            'Sign Up',
-                            style: GoogleFonts.poppins(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
+                          child: _isLoading
+                            ? const CircularProgressIndicator(color: Colors.white)
+                            : Text(
+                                'Sign Up',
+                                style: GoogleFonts.poppins(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                         ),
                       ),
                     ],

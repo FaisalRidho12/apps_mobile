@@ -33,7 +33,9 @@ class _HomeScreenState extends State<HomeScreen> {
   AudioPlayer audioPlayer = AudioPlayer();
   bool isAlarmPlaying = false; // Menambahkan status alarm
   String username = 'User';
-  bool _showAddButton = false;
+  // bool _showAddButton = false;
+  bool _showDeleteButton = false; // Untuk menampilkan tombol hapus
+  int _selectedImageIndex = -1; // Menyimpan index gambar yang dipilih
 
   @override
   void initState() {
@@ -317,14 +319,8 @@ static void callbackDispatcher() {
             GestureDetector(
               onTap: () {
                 setState(() {
-                  // Manual slide ketika gambar ditekan
-                  // _currentPage = (_currentPage + 1) % 3;
-                  // _pageController.animateToPage(
-                  //   _currentPage,
-                  //   duration: const Duration(milliseconds: 500),
-                  //   curve: Curves.easeInOut,
-                  // );
-                  _showAddButton = !_showAddButton;
+                  // _showAddButton = !_showAddButton;
+                  _showDeleteButton = !_showDeleteButton;
                 });
               },
               child: ClipRRect(
@@ -343,30 +339,11 @@ static void callbackDispatcher() {
                     itemBuilder: (context, index) {
                       final imagePath = imagePaths[index];
                       return GestureDetector(
-                        onLongPress: () {
-                          // Tampilkan dialog konfirmasi hapus gambar
-                          showDialog(
-                            context: context,
-                            builder: (context) => AlertDialog(
-                              title: const Text('Hapus Gambar'),
-                              content: const Text('Apakah Anda yakin ingin menghapus gambar ini?'),
-                              actions: [
-                                TextButton(
-                                  onPressed: () {
-                                    Navigator.pop(context); // Tutup dialog
-                                  },
-                                  child: const Text('Batal'),
-                                ),
-                                TextButton(
-                                  onPressed: () {
-                                    _deleteImage(index); // Hapus gambar
-                                    Navigator.pop(context); // Tutup dialog
-                                  },
-                                  child: const Text('Hapus'),
-                                ),
-                              ],
-                            ),
-                          );
+                        onTap: () {
+                          setState(() {
+                            _selectedImageIndex = index; // Update index gambar yang dipilih
+                            _showDeleteButton = true; // Tampilkan tombol hapus saat gambar diklik
+                          });
                         },
                         child: imagePath.startsWith('assets/')
                             ? Image.asset(imagePath, fit: BoxFit.cover)
@@ -377,15 +354,67 @@ static void callbackDispatcher() {
                 ),
               ),
             ),
-              if (_showAddButton)
-              Center(
-                child: ElevatedButton(
-                  onPressed: _pickImage,
-                  style: ElevatedButton.styleFrom(
-                    foregroundColor: Colors.white, backgroundColor: Colors.brown, // Warna teks putih
+              // if (_showAddButton)
+              // Center(
+              //   child: ElevatedButton(
+              //     onPressed: _pickImage,
+              //     style: ElevatedButton.styleFrom(
+              //       foregroundColor: Colors.white, 
+              //       backgroundColor: Colors.brown, // Warna teks putih
+              //     ),
+              //     child: const Text("Tambah Gambar"),
+              //   ),
+              // ),
+            if (_showDeleteButton && _selectedImageIndex != -1)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.photo_library),
+                    onPressed: _pickImage, // Menambah gambar
+                    tooltip: 'Tambah Gambar',
                   ),
-                  child: const Text("Tambah Gambar"),
-                ),
+                  IconButton(
+                    icon: const Icon(Icons.delete),
+                    onPressed: () {
+                      // Tampilkan dialog konfirmasi hapus gambar
+                      showDialog(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text('Hapus Gambar'),
+                          content: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                imagePaths[_selectedImageIndex].startsWith('assets/')
+                                ? Image.asset(
+                                    imagePaths[_selectedImageIndex], height: 100)
+                                : Image.file(
+                                    File(imagePaths[_selectedImageIndex]),
+                                    height: 100),
+                                const Text('Apakah Anda yakin ingin menghapus gambar ini?'),
+                              ],
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.pop(context); // Tutup dialog
+                                },
+                                child: const Text('Batal'),
+                              ),
+                            TextButton(
+                              onPressed: () {
+                                _deleteImage(_selectedImageIndex); // Hapus gambar
+                                Navigator.pop(context); // Tutup dialog
+                              },
+                              child: const Text('Hapus'),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                    tooltip: 'Hapus Gambar',
+                  ),
+                ],
               ),
             const SizedBox(height: 16),
             Container(
