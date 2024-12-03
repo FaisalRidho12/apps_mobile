@@ -18,6 +18,7 @@ class _IoTScreenState extends State<IoTScreen> {
   late MqttService mqttService;
   String temperature = ""; // Variable to hold temperature
   String humidity = ""; // Variable to hold humidity
+  final int _selectedIndex = 1; // Halaman awal
 
   @override
   void initState() {
@@ -69,7 +70,7 @@ class _IoTScreenState extends State<IoTScreen> {
                     .foodStockStream, // Assuming you have a stream for the stock level
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return CircularProgressIndicator(); // Show loading while waiting for data
+                    return const CircularProgressIndicator(); // Show loading while waiting for data
                   } else if (snapshot.hasError) {
                     return Text('Error: ${snapshot.error}');
                   } else if (snapshot.hasData) {
@@ -119,9 +120,9 @@ class _IoTScreenState extends State<IoTScreen> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(
+                    const Icon(
                       Icons.touch_app, // Icon for manual control
-                      color: const Color(0xFF594545),
+                      color: Color(0xFF594545),
                       size: 24,
                     ),
                     const SizedBox(width: 10),
@@ -161,9 +162,9 @@ class _IoTScreenState extends State<IoTScreen> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(
+                    const Icon(
                       Icons.timer, // Icon for automatic control
-                      color: const Color(0xFF594545),
+                      color: Color(0xFF594545),
                       size: 24,
                     ),
                     const SizedBox(width: 10),
@@ -198,7 +199,7 @@ class _IoTScreenState extends State<IoTScreen> {
             style: GoogleFonts.poppins(
               fontSize: 22,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF594545),
+              color: const Color(0xFF594545),
             ),
           ),
           content: StreamBuilder(
@@ -230,14 +231,14 @@ class _IoTScreenState extends State<IoTScreen> {
                           ),
                           child: Row(
                             children: [
-                              Icon(Icons.thermostat, color: Color(0xFF594545)),
+                              const Icon(Icons.thermostat, color: Color(0xFF594545)),
                               const SizedBox(width: 8),
                               Text(
                                 'Suhu: ${data['temperature']} °C',
                                 style: GoogleFonts.poppins(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w500,
-                                  color: Color(0xFF594545),
+                                  color: const Color(0xFF594545),
                                 ),
                               ),
                             ],
@@ -268,14 +269,14 @@ class _IoTScreenState extends State<IoTScreen> {
                           ),
                           child: Row(
                             children: [
-                              Icon(Icons.water_drop, color: Color(0xFF594545)),
+                              const Icon(Icons.water_drop, color: Color(0xFF594545)),
                               const SizedBox(width: 8),
                               Text(
                                 'Kelembapan: ${data['humidity']} %',
                                 style: GoogleFonts.poppins(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w500,
-                                  color: Color(0xFF594545),
+                                  color: const Color(0xFF594545),
                                 ),
                               ),
                             ],
@@ -303,7 +304,7 @@ class _IoTScreenState extends State<IoTScreen> {
                       style: GoogleFonts.poppins(
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
-                        color: Color(0xFF594545),
+                        color: const Color(0xFF594545),
                       ),
                     ),
                   ],
@@ -319,7 +320,7 @@ class _IoTScreenState extends State<IoTScreen> {
               child: Text(
                 'Tutup',
                 style: GoogleFonts.poppins(
-                  color: Color(0xFF594545),
+                  color: const Color(0xFF594545),
                   fontWeight: FontWeight.w800,
                 ),
               ),
@@ -359,7 +360,7 @@ class _IoTScreenState extends State<IoTScreen> {
                   style: GoogleFonts.poppins(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF594545),
+                    color: const Color(0xFF594545),
                   ),
                 ),
               ),
@@ -418,7 +419,7 @@ class _IoTScreenState extends State<IoTScreen> {
                         Text(
                           'Monitoring',
                           style: GoogleFonts.poppins(
-                            color: Color(0xFF594545),
+                            color: const Color(0xFF594545),
                             fontSize: 18,
                             fontWeight: FontWeight.w500,
                           ),
@@ -454,7 +455,7 @@ class _IoTScreenState extends State<IoTScreen> {
                         Text(
                           'Pakan',
                           style: GoogleFonts.poppins(
-                            color: Color(0xFF594545),
+                            color: const Color(0xFF594545),
                             fontSize: 18,
                             fontWeight: FontWeight.w500,
                           ),
@@ -472,46 +473,97 @@ class _IoTScreenState extends State<IoTScreen> {
     );
   }
 
-  Widget _buildBottomNavigationBar() {
-    return BottomNavigationBar(
+Widget _buildBottomNavigationBar() {
+  return Container(
+    margin: const EdgeInsets.all(25), // Jarak antara kotak dengan tepi layar
+    padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 5),
+    decoration: BoxDecoration(
+      color: Colors.white, // Warna latar kotak
+      borderRadius: BorderRadius.circular(30), // Membuat sudut membulat
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.1), // Shadow lembut
+          blurRadius: 12,
+          spreadRadius: 3,
+          offset: const Offset(0, 5),
+        ),
+      ],
+    ),
+    child: BottomNavigationBar(
       currentIndex: _currentIndex,
-      onTap: (index) {
+      onTap: (int index) {
         setState(() {
           _currentIndex = index;
         });
         if (index == 0) {
-          Navigator.pushAndRemoveUntil(
+          Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => const HomeScreen()),
-            (Route<dynamic> route) => false,
+          );
+        } else if (index == 1) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const IoTScreen()),
           );
         } else if (index == 2) {
-          Navigator.pushAndRemoveUntil(
+          Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => const ProfileScreen()),
-            (Route<dynamic> route) => false,
           );
         }
       },
-      items: const [
+      items: [
         BottomNavigationBarItem(
-          icon: ImageIcon(AssetImage('assets/icons1/home.png'), size: 24),
+          icon: _buildAnimatedIcon(0, 'assets/icons1/home.png'),
           label: 'Home',
         ),
         BottomNavigationBarItem(
-          icon: ImageIcon(AssetImage('assets/icons1/iot.png'), size: 24),
+          icon: _buildAnimatedIcon(1, 'assets/icons1/iot.png'),
           label: 'IoT',
         ),
         BottomNavigationBarItem(
-          icon: ImageIcon(AssetImage('assets/icons1/profil.png'), size: 24),
-          label: 'Profile',
+          icon: _buildAnimatedIcon(2, 'assets/icons1/profil.png'),
+          label: 'Account',
         ),
       ],
+      backgroundColor: Colors.transparent, // Supaya transparan karena ada kotak luar
+      elevation: 0, // Hilangkan bayangan default BottomNavigationBar
       selectedItemColor: const Color(0xFF594545),
       unselectedItemColor: Colors.grey,
-      showUnselectedLabels: true,
-    );
-  }
+      showUnselectedLabels: false,
+    ),
+  );
+}
+
+  Widget _buildAnimatedIcon(int index, String assetPath) {
+  bool isSelected = _selectedIndex == index;
+
+  return AnimatedContainer(
+    duration: const Duration(milliseconds: 300),
+    curve: Curves.easeInOut,
+    decoration: BoxDecoration(
+      color: isSelected ? Colors.white : Colors.transparent, // Lingkaran putih
+      shape: BoxShape.circle,
+      boxShadow: isSelected
+          ? [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.3),
+                blurRadius: 10,
+                offset: const Offset(0, 5),
+              ),
+            ]
+          : [],
+    ),
+    padding: EdgeInsets.all(isSelected ? 12 : 0), // Padding bertambah saat dipilih
+    child: ImageIcon(
+      AssetImage(assetPath),
+      size: isSelected ? 36 : 28, // Ikon lebih besar saat dipilih
+      color: isSelected ? const Color(0xFF594545) : Colors.grey,
+    ),
+  );
+}
+
+
 
   @override
   void dispose() {

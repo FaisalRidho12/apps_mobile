@@ -23,6 +23,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String email = '';
   XFile? _selectedImage;
   bool _showOptions = false;
+  final int _selectedIndex = 2; // Halaman awal
 
   @override
   void initState() {
@@ -55,9 +56,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
     Future<void> _pickImage() async {
-    final ImagePicker _picker = ImagePicker();
+    final ImagePicker picker = ImagePicker();
     try {
-      final XFile? pickedImage = await _picker.pickImage(source: ImageSource.gallery);
+      final XFile? pickedImage = await picker.pickImage(source: ImageSource.gallery);
       if (pickedImage != null) {
         setState(() {
           _selectedImage = pickedImage;
@@ -210,10 +211,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildBottomNavigationBar() {
-    return BottomNavigationBar(
+Widget _buildBottomNavigationBar() {
+  return Container(
+    margin: const EdgeInsets.all(25), // Jarak antara kotak dengan tepi layar
+    padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 5),
+    decoration: BoxDecoration(
+      color: Colors.white, // Warna latar kotak
+      borderRadius: BorderRadius.circular(30), // Membuat sudut membulat
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.1), // Shadow lembut
+          blurRadius: 12,
+          spreadRadius: 3,
+          offset: const Offset(0, 5),
+        ),
+      ],
+    ),
+    child: BottomNavigationBar(
       currentIndex: _currentIndex,
-      onTap: (index) {
+      onTap: (int index) {
         setState(() {
           _currentIndex = index;
         });
@@ -221,35 +237,71 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => const HomeScreen()),
-            // (Route<dynamic> route) => false,
           );
         } else if (index == 1) {
           Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => const IoTScreen()),
-            // (Route<dynamic> route) => false,
+          );
+        } else if (index == 2) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const ProfileScreen()),
           );
         }
       },
-      items: const [
+      items: [
         BottomNavigationBarItem(
-          icon: ImageIcon(AssetImage('assets/icons1/home.png'), size: 24),
+          icon: _buildAnimatedIcon(0, 'assets/icons1/home.png'),
           label: 'Home',
         ),
         BottomNavigationBarItem(
-          icon: ImageIcon(AssetImage('assets/icons1/iot.png'), size: 24),
+          icon: _buildAnimatedIcon(1, 'assets/icons1/iot.png'),
           label: 'IoT',
         ),
         BottomNavigationBarItem(
-          icon: ImageIcon(AssetImage('assets/icons1/profil.png'), size: 24),
-          label: 'Profile',
+          icon: _buildAnimatedIcon(2, 'assets/icons1/profil.png'),
+          label: 'Account',
         ),
       ],
+      backgroundColor: Colors.transparent, // Supaya transparan karena ada kotak luar
+      elevation: 0, // Hilangkan bayangan default BottomNavigationBar
       selectedItemColor: const Color(0xFF594545),
       unselectedItemColor: Colors.grey,
-      showUnselectedLabels: true,
-    );
-  }
+      showUnselectedLabels: false,
+    ),
+  );
+}
+
+  Widget _buildAnimatedIcon(int index, String assetPath) {
+  bool isSelected = _selectedIndex == index;
+
+  return AnimatedContainer(
+    duration: const Duration(milliseconds: 300),
+    curve: Curves.easeInOut,
+    decoration: BoxDecoration(
+      color: isSelected ? Colors.white : Colors.transparent, // Lingkaran putih
+      shape: BoxShape.circle,
+      boxShadow: isSelected
+          ? [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.3),
+                blurRadius: 10,
+                offset: const Offset(0, 5),
+              ),
+            ]
+          : [],
+    ),
+    padding: EdgeInsets.all(isSelected ? 12 : 0), // Padding bertambah saat dipilih
+    child: ImageIcon(
+      AssetImage(assetPath),
+      size: isSelected ? 36 : 28, // Ikon lebih besar saat dipilih
+      color: isSelected ? const Color(0xFF594545) : Colors.grey,
+    ),
+  );
+}
+
+
 }
 
 class SettingsScreen extends StatefulWidget {
@@ -287,7 +339,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           email = user.email ?? ''; // Ambil email dari FirebaseAuth
         });
       } catch (e) {
-        print('Error fetching username: $e');
+        // print('Error fetching username: $e');
         setState(() {
           displayName = 'User'; // Jika terjadi error, tampilkan default username
           email = user.email ?? 'Not available'; // Jika email tidak ditemukan
@@ -296,10 +348,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
-      Future<void> _pickImage() async {
-    final ImagePicker _picker = ImagePicker();
+  Future<void> _pickImage() async {
+    final ImagePicker picker = ImagePicker();
     try {
-      final XFile? pickedImage = await _picker.pickImage(source: ImageSource.gallery);
+      final XFile? pickedImage = await picker.pickImage(source: ImageSource.gallery);
       if (pickedImage != null) {
         setState(() {
           _selectedImage = pickedImage;
@@ -308,7 +360,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         _saveImagePath(pickedImage.path);
       }
     } catch (e) {
-      print('Error picking image: $e');
+      // print('Error picking image: $e');
     }
   }
 

@@ -36,6 +36,7 @@ class _HomeScreenState extends State<HomeScreen> {
   // bool _showAddButton = false;
   bool _showDeleteButton = false; // Untuk menampilkan tombol hapus
   int _selectedImageIndex = -1; // Menyimpan index gambar yang dipilih
+  int _selectedIndex = 0;
 
   @override
   void initState() {
@@ -69,6 +70,34 @@ class _HomeScreenState extends State<HomeScreen> {
       });
     }
   }
+
+    Widget _buildAnimatedIcon(int index, String assetPath) {
+  bool isSelected = _selectedIndex == index;
+
+  return AnimatedContainer(
+    duration: const Duration(milliseconds: 300),
+    curve: Curves.easeInOut,
+    decoration: BoxDecoration(
+      color: isSelected ? Colors.white : Colors.transparent, // Lingkaran putih
+      shape: BoxShape.circle,
+      boxShadow: isSelected
+          ? [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.3),
+                blurRadius: 10,
+                offset: const Offset(0, 5),
+              ),
+            ]
+          : [],
+    ),
+    padding: EdgeInsets.all(isSelected ? 12 : 0), // Padding bertambah saat dipilih
+    child: ImageIcon(
+      AssetImage(assetPath),
+      size: isSelected ? 36 : 28, // Ikon lebih besar saat dipilih
+      color: isSelected ? const Color(0xFF594545) : Colors.grey,
+    ),
+  );
+}
   
   // Fungsi untuk memilih gambar dari galeri
   Future<void> _loadImages() async {
@@ -84,6 +113,7 @@ class _HomeScreenState extends State<HomeScreen> {
           'assets/images/cat1.png',
           'assets/images/cat2.png',
           'assets/images/cat3.png',
+          'assets/images/cat4.png',
         ]);
       }
     });
@@ -140,7 +170,7 @@ class _HomeScreenState extends State<HomeScreen> {
         });
         _pageController.animateToPage(
           _currentPage,
-          duration: const Duration(milliseconds: 500),
+          duration: const Duration(milliseconds: 600),
           curve: Curves.easeInOut,
         );
         _startAutoSlide(); // Panggil kembali untuk loop animasi
@@ -220,10 +250,10 @@ static void callbackDispatcher() {
     );
 
     // Play alarm sound (if necessary)
-    final audioPlayer = AudioPlayer();
-    await audioPlayer.setSource(AssetSource('alarm_sound.mp3'));
-    audioPlayer.setReleaseMode(ReleaseMode.loop);
-    await audioPlayer.resume();
+    //final audioPlayer = AudioPlayer();
+    // await audioPlayer.setSource(AssetSource('alarm_sound.mp3'));
+    // audioPlayer.setReleaseMode(ReleaseMode.loop);
+    // await audioPlayer.resume();
 
     return Future.value(true);
   });
@@ -277,7 +307,7 @@ static void callbackDispatcher() {
               now.hour == scheduleDateTime.hour &&
               now.minute == scheduleDateTime.minute) {
             _showNotification(schedule['name']);
-            _playAlarm();
+            // _playAlarm();
           }
         }
       }
@@ -354,17 +384,6 @@ static void callbackDispatcher() {
                 ),
               ),
             ),
-              // if (_showAddButton)
-              // Center(
-              //   child: ElevatedButton(
-              //     onPressed: _pickImage,
-              //     style: ElevatedButton.styleFrom(
-              //       foregroundColor: Colors.white, 
-              //       backgroundColor: Colors.brown, // Warna teks putih
-              //     ),
-              //     child: const Text("Tambah Gambar"),
-              //   ),
-              // ),
             if (_showDeleteButton && _selectedImageIndex != -1)
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -513,49 +532,64 @@ static void callbackDispatcher() {
           ],
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 0, // Menetapkan Home sebagai halaman awal
-        onTap: (int index) {
-          if (index == 0) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const HomeScreen(),
-              ),
-            );
-          } else if (index == 1) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const IoTScreen(), // Mengarahkan ke halaman IoT
-              ),
-            );
-          } else if (index == 2) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const ProfileScreen(), // Mengarahkan ke halaman Profile
-              ),
-            );
-          }
-        },
-        items: const [
-          BottomNavigationBarItem(
-            icon: ImageIcon(AssetImage('assets/icons1/home.png'), size: 24),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: ImageIcon(AssetImage('assets/icons1/iot.png'), size: 24),
-            label: 'IoT',
-          ),
-          BottomNavigationBarItem(
-            icon: ImageIcon(AssetImage('assets/icons1/profil.png'), size: 24),
-            label: 'Profile',
-          ),
-        ],
-        selectedItemColor: const Color(0xFF594545),
-        unselectedItemColor: Colors.grey,
-        showUnselectedLabels: true,
+      bottomNavigationBar: Container(
+        margin: const EdgeInsets.all(25), // Jarak antara kotak dengan tepi layar
+        padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 5),
+        decoration: BoxDecoration(
+          color: Colors.white,// Warna latar kotak
+          borderRadius: BorderRadius.circular(30), // Membuat sudut membulat
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1), // Shadow lembut
+              blurRadius: 12,
+              spreadRadius: 3,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
+        child: BottomNavigationBar(
+          currentIndex: _selectedIndex,
+          onTap: (int index) {
+            setState(() {
+              _selectedIndex = index;
+            });
+            if (index == 0) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const HomeScreen()),
+              );
+            } else if (index == 1) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const IoTScreen()),
+              );
+            } else if (index == 2) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const ProfileScreen()),
+              );
+            }
+          },
+          items: [
+            BottomNavigationBarItem(
+              icon: _buildAnimatedIcon(0, 'assets/icons1/home.png'),
+              label: 'Home',
+            ),
+            BottomNavigationBarItem(
+              icon: _buildAnimatedIcon(1, 'assets/icons1/iot.png'),
+              label: 'IoT',
+            ),
+            BottomNavigationBarItem(
+              icon: _buildAnimatedIcon(2, 'assets/icons1/profil.png'),
+              label: 'Account',
+            ),
+          ],
+          backgroundColor: Colors.transparent, // Supaya transparan karena ada kotak luar
+          elevation: 0, // Hilangkan bayangan default BottomNavigationBar
+          selectedItemColor: const Color(0xFF594545),
+          unselectedItemColor: Colors.grey,
+          showUnselectedLabels: false,
+        ),
       ),
     );
   }
