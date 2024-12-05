@@ -45,7 +45,7 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             decoration: BoxDecoration(
-              color: Colors.green,
+              color: const Color(0xFF594545),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
@@ -67,61 +67,77 @@ class _LoginScreenState extends State<LoginScreen> {
     });
   }
 
-  Future<void> _login() async {
-    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
-      setState(() {
-        errorMessage = "Silahkan masukkan email dan password.";
-      });
-      return;
-    }
-
+Future<void> _login() async {
+  if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
     setState(() {
-      _isLoading = true;
-      errorMessage = null;
+      errorMessage = "Silahkan masukkan email dan password.";
     });
-
-    try {
-      await _auth.signInWithEmailAndPassword(
-        email: _emailController.text,
-        password: _passwordController.text,
-      );
-
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      prefs.setBool('isLoggedIn', true);
-
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
-      );
-    } on FirebaseAuthException catch (e) {
-      setState(() {
-        switch (e.code) {
-          case 'wrong-password':
-            errorMessage = 'Email atau password salah.';
-            break;
-          case 'invalid-email':
-            errorMessage = 'Alamat email tidak valid.';
-            break;
-          case 'user-disabled':
-            errorMessage = 'Akun ini telah dinonaktifkan.';
-            break;
-          case 'user-not-found':
-            errorMessage = 'Akun tidak ditemukan.';
-            break;
-          default:
-            errorMessage = 'Terjadi kesalahan. Silakan coba lagi.';
-        }
-      });
-    } catch (e) {
-      setState(() {
-        errorMessage = 'Terjadi kesalahan yang tidak terduga. Silakan coba lagi.';
-      });
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
-    }
+    return;
   }
+
+  // Validasi manual untuk format email
+  if (!_isValidEmail(_emailController.text.trim())) {
+    setState(() {
+      errorMessage = "Alamat email tidak valid.";
+    });
+    return;
+  }
+
+  setState(() {
+    _isLoading = true;
+    errorMessage = null;
+  });
+
+  try {
+    await _auth.signInWithEmailAndPassword(
+      email: _emailController.text.trim(),
+      password: _passwordController.text,
+    );
+
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setBool('isLoggedIn', true);
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => const HomeScreen()),
+    );
+  } on FirebaseAuthException catch (e) {
+    print("FirebaseAuthException code: ${e.code}");
+    print("FirebaseAuthException message: ${e.message}");
+    setState(() {
+      switch (e.code) {
+        case 'wrong-password':
+          errorMessage = 'Email atau password salah.';
+          break;
+        case 'user-not-found':
+          errorMessage = 'Akun tidak ditemukan.';
+          break;
+        case 'user-disabled':
+          errorMessage = 'Akun ini telah dinonaktifkan.';
+          break;
+        case 'invalid-email':
+          errorMessage = 'Alamat email tidak valid.';
+          break;
+        default:
+          errorMessage = 'Terjadi kesalahan login. Periksa kembali email dan password Anda.';
+      }
+    });
+  } catch (e) {
+    setState(() {
+      errorMessage = 'Terjadi kesalahan yang tidak terduga. Silakan coba lagi.';
+    });
+  } finally {
+    setState(() {
+      _isLoading = false;
+    });
+  }
+}
+
+// Validasi format email
+bool _isValidEmail(String email) {
+  final emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
+  return emailRegex.hasMatch(email);
+}
 
   Future<void> _resetPassword() async {
     if (_emailController.text.isEmpty) {
