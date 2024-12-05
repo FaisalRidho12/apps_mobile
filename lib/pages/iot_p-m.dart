@@ -13,21 +13,18 @@ class ServoManualControlPage extends StatefulWidget {
 }
 
 class _ServoManualControlPageState extends State<ServoManualControlPage> {
-  String _servoStatus = 'Tertutup'; // Initial status is closed
-  Color _statusColor = Colors.red; // Initial color (red for closed)
-  IconData _statusIcon = Icons.lock; // Initial icon (lock for closed)
+  String _servoStatus = 'Tertutup'; // Status awal adalah tertutup
+  Color _statusColor = Colors.red; // Warna awal (merah untuk tertutup)
 
-  // Function to update the servo status
+  // Fungsi untuk memperbarui status servo
   void _updateServoStatus(String status) {
     setState(() {
       if (status == 'Terbuka') {
         _servoStatus = status;
-        _statusColor = Colors.green; // Green for open
-        _statusIcon = Icons.lock_open; // Lock open icon
+        _statusColor = Colors.green; // Hijau untuk terbuka
       } else {
         _servoStatus = status;
-        _statusColor = Colors.red; // Red for closed
-        _statusIcon = Icons.lock; // Lock closed icon
+        _statusColor = Colors.red; // Merah untuk tertutup
       }
     });
   }
@@ -39,14 +36,27 @@ class _ServoManualControlPageState extends State<ServoManualControlPage> {
         title: Text(
           'Pakan Manual',
           style: GoogleFonts.poppins(
-            fontSize: 24,
+            fontSize: 20,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF594545), // Custom text color
+            color: const Color(0xFF594545), // Warna teks khusus
           ),
         ),
-        backgroundColor: const Color(0xFFFFF8EA), // Light beige color
-        elevation: 15,
-        shadowColor: Colors.grey.withOpacity(0.5), // Shadow with opacity
+        backgroundColor: const Color(0xFFFFF8EA), // Warna beige terang
+        elevation: 4, // Memberikan efek bayangan standar
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFF8EA), // Pastikan warna tetap sama
+            boxShadow: [
+              BoxShadow(
+                color:
+                    Colors.grey.withOpacity(0.3), // Bayangan yang lebih halus
+                spreadRadius: 2, // Menentukan area sebar bayangan
+                blurRadius: 5, // Mengatur kelembutan bayangan
+                offset: const Offset(0, 3), // Posisi bayangan
+              ),
+            ],
+          ),
+        ),
       ),
       body: Center(
         child: Padding(
@@ -57,10 +67,13 @@ class _ServoManualControlPageState extends State<ServoManualControlPage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
-                    _statusIcon,
-                    color: _statusColor,
-                    size: 40, // Icon size
+                  Container(
+                    width: 20, // Lebar indikator
+                    height: 20, // Tinggi indikator
+                    decoration: BoxDecoration(
+                      color: _statusColor, // Warna indikator sesuai status
+                      shape: BoxShape.circle, // Bentuk lingkaran
+                    ),
                   ),
                   const SizedBox(width: 10),
                   Text(
@@ -68,7 +81,7 @@ class _ServoManualControlPageState extends State<ServoManualControlPage> {
                     style: GoogleFonts.poppins(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      color: _statusColor, // Text color changes with status
+                      color: _statusColor, // Warna teks mengikuti status
                     ),
                   ),
                 ],
@@ -77,10 +90,10 @@ class _ServoManualControlPageState extends State<ServoManualControlPage> {
               ElevatedButton(
                 onPressed: () {
                   widget.mqttService.publish('catcare/servo', 'OPEN');
-                  _updateServoStatus('Terbuka'); // Update status to open
+                  _updateServoStatus('Terbuka'); // Perbarui status ke terbuka
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFF594545), // Button color
+                  backgroundColor: Color(0xFF594545), // Warna tombol
                   padding:
                       const EdgeInsets.symmetric(vertical: 15, horizontal: 40),
                   shape: RoundedRectangleBorder(
@@ -100,11 +113,11 @@ class _ServoManualControlPageState extends State<ServoManualControlPage> {
               ElevatedButton(
                 onPressed: () {
                   widget.mqttService.publish('catcare/servo', 'CLOSE');
-                  _updateServoStatus('Tertutup'); // Update status to closed
+                  _updateServoStatus('Tertutup'); // Perbarui status ke tertutup
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor:
-                      Color(0xFF594545), // Same color for consistency
+                      Color(0xFF594545), // Warna tombol untuk konsistensi
                   padding:
                       const EdgeInsets.symmetric(vertical: 15, horizontal: 40),
                   shape: RoundedRectangleBorder(
