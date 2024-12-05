@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'dart:async'; // For the Timer function
+import 'dart:async';  // For the Timer function
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -23,11 +23,9 @@ class _SplashScreenState extends State<SplashScreen> {
     // Menggunakan Timer untuk memberikan delay pada splash screen
     Timer(const Duration(seconds: 2), () {
       if (isLoggedIn) {
-        Navigator.of(context)
-            .pushReplacementNamed('/home'); // Jika sudah login, ke halaman home
+        Navigator.of(context).pushReplacementNamed('/home');  // Jika sudah login, ke halaman home
       } else {
-        Navigator.of(context).pushReplacementNamed(
-            '/login'); // Jika belum login, ke halaman login
+        Navigator.of(context).pushReplacementNamed('/login');  // Jika belum login, ke halaman login
       }
     });
   }
@@ -35,28 +33,14 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFAB886D), // Color for the background
+      backgroundColor: const Color(0xFFAB886D),  // Color for the background
       body: Stack(
         children: [
-          // const Align(
-          //   alignment: Alignment.topCenter,  // Ubah sesuai kebutuhan
-          //   child: Padding(
-          //     padding: EdgeInsets.only(top: 150.0),  // Jarak dari atas
-          //     child: Text(
-          //       'Selamat Datang',
-          //       style: TextStyle(
-          //         fontSize: 35,
-          //         fontWeight: FontWeight.bold,
-          //         color: Colors.white,
-          //       ),
-          //     ),
-          //   ),
-          // ),
           Align(
-            alignment: Alignment.center, // Posisi gambar di tengah
+            alignment: Alignment.center,  // Posisi gambar di tengah
             child: Image.asset(
-              'assets/images/logoo.png', // Your image path
-              width: 200, // Adjust the size as needed
+              'assets/images/logoo.png',  // Your image path
+              width: 200,  // Adjust the size as needed
               height: 200,
             ),
           ),

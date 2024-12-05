@@ -72,6 +72,7 @@ class _IoTScreenState extends State<IoTScreen> {
                     .foodStockStream, // Assuming you have a stream for the stock level
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
+<<<<<<< HEAD
                     // Loading state, show loading GIF
                     return Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -93,6 +94,9 @@ class _IoTScreenState extends State<IoTScreen> {
                         ),
                       ],
                     );
+=======
+                    return const CircularProgressIndicator(); // Show loading while waiting for data
+>>>>>>> de70fa648984183b2347d9d335df45274318f811
                   } else if (snapshot.hasError) {
                     return Text('Error: ${snapshot.error}');
                   } else if (snapshot.hasData) {
@@ -199,9 +203,9 @@ class _IoTScreenState extends State<IoTScreen> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(
+                    const Icon(
                       Icons.touch_app, // Icon for manual control
-                      color: const Color(0xFF594545),
+                      color: Color(0xFF594545),
                       size: 24,
                     ),
                     const SizedBox(width: 10),
@@ -241,9 +245,9 @@ class _IoTScreenState extends State<IoTScreen> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(
+                    const Icon(
                       Icons.timer, // Icon for automatic control
-                      color: const Color(0xFF594545),
+                      color: Color(0xFF594545),
                       size: 24,
                     ),
                     const SizedBox(width: 10),
@@ -279,6 +283,7 @@ class _IoTScreenState extends State<IoTScreen> {
             style: GoogleFonts.poppins(
               fontSize: 22,
               fontWeight: FontWeight.bold,
+<<<<<<< HEAD
               color: const Color(0xFF594545), // Title color
             ),
           ),
@@ -295,6 +300,105 @@ class _IoTScreenState extends State<IoTScreen> {
                       builder: (context) => TemperaturePage(
                         dhtStream:
                             mqttService.dhtStream, // Send temperature stream
+=======
+              color: const Color(0xFF594545),
+            ),
+          ),
+          content: StreamBuilder(
+            stream: mqttService.dhtStream,
+            builder: (context, snapshot) {
+              if (snapshot.hasData) {
+                var data = snapshot.data as Map<String, String>;
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 8, horizontal: 12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFF8EA), // Background color
+                            borderRadius:
+                                BorderRadius.circular(12), // Rounded corners
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.grey
+                                    .withOpacity(0.3), // Shadow color
+                                spreadRadius: 2, // Shadow spread
+                                blurRadius: 5, // Shadow blur effect
+                                offset: const Offset(0, 3), // Shadow position
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.thermostat, color: Color(0xFF594545)),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Suhu: ${data['temperature']} °C',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                  color: const Color(0xFF594545),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 8, horizontal: 12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFF8EA), // Background color
+                            borderRadius:
+                                BorderRadius.circular(12), // Rounded corners
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.grey
+                                    .withOpacity(0.3), // Shadow color
+                                spreadRadius: 2, // Shadow spread
+                                blurRadius: 5, // Shadow blur effect
+                                offset: const Offset(0, 3), // Shadow position
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.water_drop, color: Color(0xFF594545)),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Kelembapan: ${data['humidity']} %',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                  color: const Color(0xFF594545),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                );
+              } else {
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox(
+                      width: 120,
+                      height: 120,
+                      child: Image.asset(
+                        'assets/images/loading-cat.gif', // Path to your GIF
+                        fit: BoxFit.cover, // Ensures the GIF scales properly
+>>>>>>> de70fa648984183b2347d9d335df45274318f811
                       ),
                     ),
                   );
@@ -327,6 +431,23 @@ class _IoTScreenState extends State<IoTScreen> {
                       ),
                     ),
                   ],
+<<<<<<< HEAD
+=======
+                );
+              }
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text(
+                'Tutup',
+                style: GoogleFonts.poppins(
+                  color: const Color(0xFF594545),
+                  fontWeight: FontWeight.w800,
+>>>>>>> de70fa648984183b2347d9d335df45274318f811
                 ),
               ),
               const SizedBox(height: 20), // Space between buttons
@@ -522,6 +643,7 @@ class _IoTScreenState extends State<IoTScreen> {
     );
   }
 
+<<<<<<< HEAD
   Widget _buildBottomNavigationBar() {
     return Container(
       margin: const EdgeInsets.all(25), // Jarak antara kotak dengan tepi layar
@@ -614,6 +736,99 @@ class _IoTScreenState extends State<IoTScreen> {
       ),
     );
   }
+=======
+Widget _buildBottomNavigationBar() {
+  return Container(
+    margin: const EdgeInsets.all(25), // Jarak antara kotak dengan tepi layar
+    padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 5),
+    decoration: BoxDecoration(
+      color: Colors.white, // Warna latar kotak
+      borderRadius: BorderRadius.circular(30), // Membuat sudut membulat
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.1), // Shadow lembut
+          blurRadius: 12,
+          spreadRadius: 3,
+          offset: const Offset(0, 5),
+        ),
+      ],
+    ),
+    child: BottomNavigationBar(
+      currentIndex: _currentIndex,
+      onTap: (int index) {
+        setState(() {
+          _currentIndex = index;
+        });
+        if (index == 0) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const HomeScreen()),
+          );
+        } else if (index == 1) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const IoTScreen()),
+          );
+        } else if (index == 2) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const ProfileScreen()),
+          );
+        }
+      },
+      items: [
+        BottomNavigationBarItem(
+          icon: _buildAnimatedIcon(0, 'assets/icons1/home.png'),
+          label: 'Home',
+        ),
+        BottomNavigationBarItem(
+          icon: _buildAnimatedIcon(1, 'assets/icons1/iot.png'),
+          label: 'IoT',
+        ),
+        BottomNavigationBarItem(
+          icon: _buildAnimatedIcon(2, 'assets/icons1/profil.png'),
+          label: 'Account',
+        ),
+      ],
+      backgroundColor: Colors.transparent, // Supaya transparan karena ada kotak luar
+      elevation: 0, // Hilangkan bayangan default BottomNavigationBar
+      selectedItemColor: const Color(0xFF594545),
+      unselectedItemColor: Colors.grey,
+      showUnselectedLabels: false,
+    ),
+  );
+}
+
+  Widget _buildAnimatedIcon(int index, String assetPath) {
+  bool isSelected = _selectedIndex == index;
+
+  return AnimatedContainer(
+    duration: const Duration(milliseconds: 300),
+    curve: Curves.easeInOut,
+    decoration: BoxDecoration(
+      color: isSelected ? Colors.white : Colors.transparent, // Lingkaran putih
+      shape: BoxShape.circle,
+      boxShadow: isSelected
+          ? [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.3),
+                blurRadius: 10,
+                offset: const Offset(0, 5),
+              ),
+            ]
+          : [],
+    ),
+    padding: EdgeInsets.all(isSelected ? 12 : 0), // Padding bertambah saat dipilih
+    child: ImageIcon(
+      AssetImage(assetPath),
+      size: isSelected ? 36 : 28, // Ikon lebih besar saat dipilih
+      color: isSelected ? const Color(0xFF594545) : Colors.grey,
+    ),
+  );
+}
+
+
+>>>>>>> de70fa648984183b2347d9d335df45274318f811
 
   @override
   void dispose() {

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
 
@@ -40,10 +41,10 @@ class _AddScheduleScreenState extends State<AddScheduleScreen> {
             _onBackPressed();
           },
         ),
-        title: const Text(
+        title: Text(
           'Tambahkan Jadwal',
-          style: TextStyle(
-            color: Color(0xFF5E3C3C),
+          style: GoogleFonts.poppins(
+            color: const Color(0xFF5E3C3C),
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -73,9 +74,9 @@ class _AddScheduleScreenState extends State<AddScheduleScreen> {
               onPressed: () {
                 _onSavePressed();
               },
-              child: const Text(
+              child: Text(
                 'Simpan',
-                style: TextStyle(
+                style: GoogleFonts.poppins(
                   color: Colors.white,
                 ),
               ),
@@ -155,11 +156,18 @@ class _AddScheduleScreenState extends State<AddScheduleScreen> {
     }
   }
 
-  void _showErrorMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
-  }
+void _showErrorMessage(String message) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(
+        message,
+        style: GoogleFonts.poppins(color: Colors.white), // Warna teks putih
+      ),
+      backgroundColor: const Color(0xFF594545), // Warna latar belakang coklat
+    ),
+  );
+}
+
 
   Widget _buildTextField(String hint, {TextEditingController? controller}) {
     return TextField(
