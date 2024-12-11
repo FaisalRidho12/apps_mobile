@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'dart:convert';
+// import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart'; // Import Firebase Auth
@@ -23,19 +23,16 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   List<Map<String, dynamic>> schedules = [];
-  // List<Widget> images = [];
   List<String> imagePaths = [];
   late PageController _pageController;
-  // final PageController _pageController = PageController(initialPage: 0);
   int _currentPage = 0;
   Timer? _timer;
   FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
   AudioPlayer audioPlayer = AudioPlayer();
-  bool isAlarmPlaying = false; // Menambahkan status alarm
+  bool isAlarmPlaying = false; 
   String username = 'User';
-  // bool _showAddButton = false;
-  bool _showDeleteButton = false; // Untuk menampilkan tombol hapus
-  int _selectedImageIndex = -1; // Menyimpan index gambar yang dipilih
+  bool _showDeleteButton = false;
+  int _selectedImageIndex = -1; 
   int _selectedIndex = 0;
 
   @override
@@ -43,7 +40,8 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     // _initializeNotifications();
     _startAutoSlide(); // Memulai animasi otomatis 
-    _loadSchedules();
+    // _loadSchedules();
+    _loadSchedulesFromFirebase();
     _checkSchedules();
     _fetchUsername();
     _pageController = PageController(initialPage: 0);
@@ -179,85 +177,133 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
 
-  Future<void> _saveSchedules() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String encodedData = jsonEncode(schedules);
-    await prefs.setString('schedules', encodedData);
-  }
+  // Future<void> _saveSchedules() async {
+  //   SharedPreferences prefs = await SharedPreferences.getInstance();
+  //   String encodedData = jsonEncode(schedules);
+  //   await prefs.setString('schedules', encodedData);
+  // }
 
-  Future<void> _loadSchedules() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? encodedData = prefs.getString('schedules');
-    if (encodedData != null) {
-      setState(() {
-        schedules = List<Map<String, dynamic>>.from(jsonDecode(encodedData));
-      });
+  // Future<void> _loadSchedules() async {
+  //   SharedPreferences prefs = await SharedPreferences.getInstance();
+  //   String? encodedData = prefs.getString('schedules');
+  //   if (encodedData != null) {
+  //     setState(() {
+  //       schedules = List<Map<String, dynamic>>.from(jsonDecode(encodedData));
+  //     });
+  //   }
+  // }
+
+Future<void> _loadSchedulesFromFirebase() async {
+  final user = FirebaseAuth.instance.currentUser;
+  if (user != null) {
+    final schedulesSnapshot = await FirebaseFirestore.instance
+        .collection('schedules')
+        .where('userId', isEqualTo: user.uid)
+        .get();
+    
+    setState(() {
+      schedules = schedulesSnapshot.docs.map((doc) {
+        var data = doc.data();
+        data['id'] = doc.id; // Menyertakan ID dokumen
+        return data;
+      }).toList();
+    });
+  }
+}
+
+
+Future<void> _saveSchedules() async {
+  final user = FirebaseAuth.instance.currentUser;
+  if (user != null) {
+    for (var schedule in schedules) {
+      try {
+        if (schedule['id'] != null) { 
+          // Jika jadwal sudah ada (dengan ID), lakukan update
+          await FirebaseFirestore.instance.collection('schedules').doc(schedule['id']).update({
+            'name': schedule['name'],
+            'date': schedule['date'],
+            'time': schedule['time'],
+            'isOn': schedule['isOn'],
+            'userId': user.uid, // Ensure userId is updated as well
+          });
+        } else {
+          // Jika jadwal baru, tambahkan ke Firestore
+          var docRef = await FirebaseFirestore.instance.collection('schedules').add({
+            'name': schedule['name'],
+            'date': schedule['date'],
+            'time': schedule['time'],
+            'isOn': schedule['isOn'],
+            'userId': user.uid,
+          });
+          // Simpan ID dokumen baru
+          schedule['id'] = docRef.id;
+        }
+      } catch (e) {
+        // print('Failed to save schedule: $e');
+      }
+    }
+    // Sinkronkan ulang data setelah menyimpan
+    await _loadSchedulesFromFirebase();
+  }
+}
+
+
+  void _scheduleBackgroundAlarms() {
+    for (var schedule in schedules) {
+      if (schedule['isOn'] == true) {
+        DateTime scheduleDateTime = DateTime.parse("${schedule['date']} ${schedule['time']}");
+        Duration timeDifference = scheduleDateTime.difference(DateTime.now());
+        if (timeDifference.isNegative) continue;
+
+        Workmanager().registerOneOffTask(
+          "alarm_${schedule['name']}_${scheduleDateTime.millisecondsSinceEpoch}",
+          "alarmTask",
+          inputData: {
+            "name": schedule['name'],
+            "date": schedule['date'],
+            "time": schedule['time'],
+          },
+          initialDelay: timeDifference,
+          constraints: Constraints(
+            networkType: NetworkType.not_required,
+            requiresBatteryNotLow: true,
+          ),
+        );
+      }
     }
   }
 
-void _scheduleBackgroundAlarms() {
-  for (var schedule in schedules) {
-    if (schedule['isOn'] == true) {
-      DateTime scheduleDateTime = DateTime.parse("${schedule['date']} ${schedule['time']}");
-      Duration timeDifference = scheduleDateTime.difference(DateTime.now());
-      if (timeDifference.isNegative) continue;
+  static void callbackDispatcher() {
+    Workmanager().executeTask((task, inputData) async {
+      final flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
 
-      Workmanager().registerOneOffTask(
-        "alarm_${schedule['name']}_${scheduleDateTime.millisecondsSinceEpoch}",
-        "alarmTask",
-        inputData: {
-          "name": schedule['name'],
-          "date": schedule['date'],
-          "time": schedule['time'],
-        },
-        initialDelay: timeDifference,
-        constraints: Constraints(
-          networkType: NetworkType.not_required,
-          requiresBatteryNotLow: true,
-        ),
+      const AndroidInitializationSettings initializationSettingsAndroid =
+          AndroidInitializationSettings('@mipmap/ic_launcher');
+      const InitializationSettings initializationSettings =
+          InitializationSettings(android: initializationSettingsAndroid);
+
+      await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+
+      const AndroidNotificationDetails androidPlatformChannelSpecifics =
+          AndroidNotificationDetails(
+        'Notification Channel ID',
+        'Schedule Reminder',
+        importance: Importance.max,
+        priority: Priority.high,
       );
-    }
+      const NotificationDetails platformChannelSpecifics =
+          NotificationDetails(android: androidPlatformChannelSpecifics);
+
+      await flutterLocalNotificationsPlugin.show(
+        0,
+        'Scheduled Reminder',
+        'It\'s time for ${inputData?['name']}!',
+        platformChannelSpecifics,
+      );
+
+      return Future.value(true);
+    });
   }
-}
-
-
-static void callbackDispatcher() {
-  Workmanager().executeTask((task, inputData) async {
-    final flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
-
-    const AndroidInitializationSettings initializationSettingsAndroid =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
-    const InitializationSettings initializationSettings =
-        InitializationSettings(android: initializationSettingsAndroid);
-
-    await flutterLocalNotificationsPlugin.initialize(initializationSettings);
-
-    const AndroidNotificationDetails androidPlatformChannelSpecifics =
-        AndroidNotificationDetails(
-      'Notification Channel ID',
-      'Schedule Reminder',
-      importance: Importance.max,
-      priority: Priority.high,
-    );
-    const NotificationDetails platformChannelSpecifics =
-        NotificationDetails(android: androidPlatformChannelSpecifics);
-
-    await flutterLocalNotificationsPlugin.show(
-      0,
-      'Scheduled Reminder',
-      'It\'s time for ${inputData?['name']}!',
-      platformChannelSpecifics,
-    );
-
-    // Play alarm sound (if necessary)
-    //final audioPlayer = AudioPlayer();
-    // await audioPlayer.setSource(AssetSource('alarm_sound.mp3'));
-    // audioPlayer.setReleaseMode(ReleaseMode.loop);
-    // await audioPlayer.resume();
-
-    return Future.value(true);
-  });
-}
 
 
   void _showNotification(String scheduleName) async {
@@ -267,6 +313,7 @@ static void callbackDispatcher() {
       'Pengingat jadwal',
       importance: Importance.max,
       priority: Priority.high,
+      sound: RawResourceAndroidNotificationSound('sound'),
     );
     const NotificationDetails platformChannelSpecifics =
         NotificationDetails(android: androidPlatformChannelSpecifics);
@@ -296,7 +343,7 @@ static void callbackDispatcher() {
   }
 
   void _checkSchedules() {
-    _timer = Timer.periodic(const Duration(minutes: 1), (Timer timer) {
+    _timer = Timer.periodic(const Duration(seconds: 10), (Timer timer) {
       final now = DateTime.now();
       for (var schedule in schedules) {
         if (schedule['isOn'] == true) {
@@ -307,7 +354,6 @@ static void callbackDispatcher() {
               now.hour == scheduleDateTime.hour &&
               now.minute == scheduleDateTime.minute) {
             _showNotification(schedule['name']);
-            // _playAlarm();
           }
         }
       }
@@ -330,11 +376,21 @@ static void callbackDispatcher() {
               const SizedBox(height: 70), // Tambahkan ruang di atas
               Container(
                 width: double.infinity,
+                height: 70,
+                // padding: const EdgeInsets.only(left: 16.0, top: 30.0),
                 padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
                 margin: const EdgeInsets.only(bottom: 16.0),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFFEDDB),
+                  color: const Color(0xFFFFF8EA),
                   borderRadius: BorderRadius.circular(10),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.5),
+                      spreadRadius: 5,
+                      blurRadius: 7,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
               ),
               child: Text(
                 "Hi, $username",
@@ -435,7 +491,7 @@ static void callbackDispatcher() {
                   ),
                 ],
               ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 6),
             Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
@@ -534,7 +590,7 @@ static void callbackDispatcher() {
       ),
       bottomNavigationBar: Container(
         margin: const EdgeInsets.all(25), // Jarak antara kotak dengan tepi layar
-        padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 5),
+        padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 3),
         decoration: BoxDecoration(
           color: Colors.white,// Warna latar kotak
           borderRadius: BorderRadius.circular(30), // Membuat sudut membulat
@@ -581,7 +637,7 @@ static void callbackDispatcher() {
             ),
             BottomNavigationBarItem(
               icon: _buildAnimatedIcon(2, 'assets/icons1/profil.png'),
-              label: 'Account',
+              label: 'Profile',
             ),
           ],
           backgroundColor: Colors.transparent, // Supaya transparan karena ada kotak luar
@@ -594,54 +650,98 @@ static void callbackDispatcher() {
     );
   }
 
-  void _showOptionDialog(BuildContext context, int index) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Pilih opsi di bawah ini'),
-          content: const Text('Pilih untuk mengedit atau menghapus jadwal.'),
-          actions: [
-            TextButton(
-              onPressed: () async {
-                Navigator.pop(context);
+void _showOptionDialog(BuildContext context, int index) {
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: const Text('Pilih opsi di bawah ini'),
+        content: const Text('Pilih untuk mengedit atau menghapus jadwal.'),
+        actions: [
+          // Tombol Edit
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
 
-                final result = await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => AddScheduleScreen(
-                      initialData: schedules[index],
-                    ),
+              // Mengarahkan ke halaman edit jadwal
+              final result = await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => AddScheduleScreen(
+                    initialData: schedules[index],
+                    // initialData: schedules[index], // Mengirim data jadwal ke halaman Edit
                   ),
-                );
+                ),
+              );
 
-                if (result != null && result is Map<String, dynamic>) {
-                  setState(() {
-                    schedules[index] = {
-                      'name': result['name'],
-                      'date': result['date'],
-                      'time': result['time'],
-                      'isOn': schedules[index]['isOn'],
-                    };
-                    _saveSchedules();
-                  });
-                }
-              },
-              child: const Text('Edit'),
-            ),
-            TextButton(
-              onPressed: () {
+              // Jika ada perubahan data dari halaman edit, update ke Firebase
+              if (result != null && result is Map<String, dynamic>) {
                 setState(() {
-                  schedules.removeAt(index);
-                  _saveSchedules();
+                  // Update data lokal
+                  schedules[index] = {
+                    // 'id': schedules[index]['id'],
+                    ...schedules[index],
+                    'name': result['name'],
+                    'date': result['date'],
+                    'time': result['time'],
+                    'isOn': result['isOn'],
+                  };
                 });
-                Navigator.pop(context);
-              },
-              child: const Text('Delete', style: TextStyle(color: Colors.red)),
-            ),
-          ],
-        );
-      },
-    );
+
+                // Perbarui data di Firebase
+                await _updateScheduleInFirebase(schedules[index], result['id']);
+              }
+            },
+            child: const Text('Edit'),
+          ),
+          // Tombol Delete
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+
+              // Hapus data lokal
+              final scheduleToDelete = schedules[index];
+              setState(() {
+                schedules.removeAt(index);
+              });
+
+              // Hapus data dari Firebase
+              await _deleteScheduleFromFirebase(scheduleToDelete['id']);
+            },
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      );
+    },
+  );
+}
+
+// Fungsi untuk memperbarui jadwal di Firebase
+Future<void> _updateScheduleInFirebase(Map<String, dynamic> updatedSchedule, String scheduleId) async {
+  final user = FirebaseAuth.instance.currentUser;
+  if (user != null) {
+    await FirebaseFirestore.instance
+        .collection('schedules')
+        .doc(scheduleId) // Gunakan ID jadwal untuk mengidentifikasi dokumen
+        .update({
+          'name': updatedSchedule['name'],
+          'date': updatedSchedule['date'],
+          'time': updatedSchedule['time'],
+          'isOn': updatedSchedule['isOn'],
+        });
+    await _loadSchedulesFromFirebase();
+  }
+}
+
+
+  Future<void> _deleteScheduleFromFirebase(String scheduleId) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      await FirebaseFirestore.instance
+          .collection('schedules')
+          .doc(scheduleId) // Menghapus berdasarkan ID dokumen
+          .delete();
+      await _loadSchedulesFromFirebase();
+    }
   }
 }

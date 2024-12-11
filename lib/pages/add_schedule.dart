@@ -78,6 +78,7 @@ class _AddScheduleScreenState extends State<AddScheduleScreen> {
                 'Simpan',
                 style: GoogleFonts.poppins(
                   color: Colors.white,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
             ),
@@ -132,6 +133,10 @@ class _AddScheduleScreenState extends State<AddScheduleScreen> {
         'time': _timeController.text,
         'isOn': _isOn,
       };
+
+      if (widget.initialData != null && widget.initialData!['id'] != null) {
+        scheduleData['id'] = widget.initialData!['id'];
+      }
 
       // Mengonversi tanggal dan waktu menjadi DateTime
       String dateTimeString = '${_dateController.text} ${_timeController.text}';
