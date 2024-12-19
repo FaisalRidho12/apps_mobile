@@ -24,6 +24,10 @@ dependencies:
   google_fonts: ^6.2.1
   fl_chart: ^0.69.2
   image_picker: ^1.1.2
+<<<<<<< HEAD
+  percent_indicator: ^4.2.4
+=======
+>>>>>>> de70fa648984183b2347d9d335df45274318f811
 
 dev_dependencies:
   flutter_test:
