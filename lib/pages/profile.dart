@@ -165,7 +165,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             _buildMenuItem(context, Icons.notifications, 'Notifikasi', () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const NotificationScreen()),
+                MaterialPageRoute(builder: (context) => HistoryPage()),
               );
             }),
             _buildMenuItem(context, Icons.info_outline, 'Tentang Kami', () {
